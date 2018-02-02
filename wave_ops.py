@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.optimize import curve_fit
+from scipy import signal
 
 def baseline_restore(wave,pretrigger):
 	'''Bitwise & operation and range restore (-=16384) with a baseline restoration \n Use: >> baseline_restore(wavetorestorebaseline,pretrig) '''
@@ -51,7 +52,7 @@ def trap_energy(traps,length,output):
 			output[i]=-1.
 
 def tail_fit(data,output):
-	'''Data should be smoothed and logged beforehand.'''
+	'''Data should be smoothed beforehand.'''
 	length = len(data[0])
 	t = np.arange(length)
 	line = lambda t,a,b: a+b*t[1200:2000]
@@ -63,8 +64,12 @@ def tail_fit(data,output):
 			output[i]=1./curve_fit(line,t,np.log(data[i][1200:2000]),p0=(np.log(np.amax(data[i])),1000.))[0][1]
 
 
-
-
+def pileup(data,workarr,thresh):
+	'''Data should be smoothed beforehand'''
+	length=len(data[0])
+	for i in range(len(data)):
+		workarr[i]=np.sum(data[i][signal.argrelmax(data[i,0:length],order=20)[0]]>thresh)
+		
 
 
 
