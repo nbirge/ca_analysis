@@ -1,5 +1,5 @@
-
 #GIT IS NOT COOPERATING!!!
+
 from mpi4py import MPI
 import numpy as np
 import wave_ops as wo
@@ -14,10 +14,15 @@ rank = comm.Get_rank()
 
 
 run,part,inpath,outpath = int(sys.argv[1]),int(sys.argv[2]),str(sys.argv[3]),str(sys.argv[4])
+if inpath[-1] != '/':
+	inpath+='/'
+if outpath[-1] != '/':
+	outpath+='/'
 fname='Run_'+str(run)+'_'+str(part)+'.bin'
 fsize = os.stat(inpath+fname).st_size
 
 fitting=1
+pileup=1
 
 length = -1.
 if rank == 0:
@@ -40,7 +45,7 @@ if rank ==1 :
 	datachunk = numrows/(size-1)-1000
 	row = 1000
 	if datachunk<0:
-		datachunk=numrows/(size-1)
+		datachunk=numrows/(size-1)		#THIS isn't right
 		row = 0
 elif rank>1 and rank< size-1:
 	row = (rank-1)*datachunk
@@ -63,15 +68,22 @@ fformat=np.zeros(10,'B')
 if fitting ==1:
 	dtype.append(('falltime','f'))
 	fformat[0]=1
-writebuffer=np.zeros(piece,dtype=dtype)
-	
 
+if pileup ==1:
+	dtype.append(('pileup','i'))
+	fformat[1]=1
+	
+writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 if rank>0:
 	trap = np.zeros(length)
 	rise,top,fall=300,200,1100
 	wo.trap(arr=trap,rise=rise,top=top,fall=fall)
-	b,a = signal.bessel(5,0.05,btype='low',analog=False) 
-	maxamps,maxlocs,risetimes=np.zeros(piece),np.zeros(piece),np.zeros(piece)
+	b,a = signal.bessel(5,0.05,btype='low',analog=False)
+	maxamps,maxlocs,risetimes=np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece)
+	if pileup == 1:
+		liltrap=np.zeros(length)
+		fast_rise,fast_top=10,4
+		wo.trap(arr=liltrap,rise=fast_rise,top=fast_top,fall=fall)
 	with open(outpath+fname[:-4]+'-'+str(rank)+'.part','w') as f:
 		for i in range(datachunk/piece):
 
@@ -81,27 +93,32 @@ if rank>0:
 				rem = 0
 			print i,row+i*piece+rem,piece,rank
 			try:
-				writebuffer[:]=0
-				data = fr.raw(path=inpath+fname,length=length,numwaves=piece,row=row+i*piece+rem)
-				writebuffer['result'], writebuffer['evID'], writebuffer['board'], writebuffer['channel'], writebuffer['timestamp'], writebuffer['requesttime'] = data['result'], data['evID'], data['board'], data['channel'], data['timestamp'], data['requesttime']
+				writebuffer[0:piece+rem]=0
+				numwaves = piece+rem
+				data = fr.raw(path=inpath+fname,length=length,numwaves=piece+rem,row=row+i*piece)
+				writebuffer[0:piece+rem]['result'], writebuffer[0:piece+rem]['evID'], writebuffer[0:piece+rem]['board'], writebuffer[0:piece+rem]['channel'], writebuffer[0:piece+rem]['timestamp'], writebuffer[0:piece+rem]['requesttime'] = data['result'], data['evID'], data['board'], data['channel'], data['timestamp'], data['requesttime']
 				wo.baseline_restore(data,600)		#restores baseline and performs necessary preformatting of the data (data & 16383...)
 				smooth_wave= signal.filtfilt(b,a,data['wave'])
-				wo.maxes(waves=smooth_wave,startpoint=500,wavelength=length,maxamps=maxamps,maxlocs=maxlocs)
-				wo.rises(smooth_wave,maxamps,maxlocs,risetimes)
-				writebuffer['risetime']=risetimes
+				wo.maxes(waves=smooth_wave,startpoint=500,wavelength=length,maxamps=maxamps[0:piece+rem],maxlocs=maxamps[0:piece+rem])
+				wo.rises(smooth_wave,maxamps[0:piece+rem],maxamps[0:piece+rem],risetimes[0:piece+rem])
+				writebuffer[0:piece+rem]['risetime']=risetimes[0:piece+rem]
 
 				if fitting ==1:
-					wo.tail_fit(data=smooth_wave,output=maxlocs)
-					writebuffer['falltime']=maxlocs
+					wo.tail_fit(data=smooth_wave,output=maxamps[0:piece+rem])
+					writebuffer[0:piece+rem]['falltime']=maxamps[0:piece+rem]
+				if pileup ==1:
+					traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, liltrap, mode='full'), axis=1, arr=data['wave'])/(fast_rise*fall)		#gotta now smooth the waves and then look for peaks
+					wo.pileup(data=traps,workarr=maxamps,thresh=125)
+					writebuffer[0:piece+rem]['pileup']=maxamps[0:piece+rem]
 
 				traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, trap, mode='full'), axis=1, arr=data['wave'])/(rise*fall)
-				wo.trap_energy(traps,length=length,output=maxamps)	#need these maxamps for fitting later...
-				writebuffer['energy']=maxamps
+				wo.trap_energy(traps,length=length,output=maxamps[0:piece+rem])	#need these maxamps for fitting later...
+				writebuffer[0:piece+rem]['energy']=maxamps[0:piece+rem]
 			
-				writebuffer.tofile(f)
+				writebuffer[0:piece+rem].tofile(f)
 			except ValueError:
 				print 'Fuckup occurred here:'
-				print rank,i,row+i*piece+rem
+				print rank,i,row+i*piece+rem,piece+rem
 
 	end=time.time()
 	print 'Rank ',rank,' finished in ',end-begin,' seconds'
@@ -112,12 +129,12 @@ if rank == 0:
 	check = np.arange(1,size,1)
 	header= np.zeros(1,dtype=[('theader','Q'),('formats','10B')])
 	header['theader'][0]=theader
-	header['formats']=fformat
+	header['formats'][0:10]=fformat[0:10]
+	header.tofile(outpath+'Run_'+str(run)+'_'+str(part)+'_0.part')
 	for i in np.arange(1,size,1):
 		print check[i-1]==comm.recv(source=i),i
-	print 'DONE'
-	os.system('cat Run_'+str(run)+'_'+str(part)+'-*.part > Run_'+str(run)+'_'+str(part)+'-comb.bin')
-	os.system('rm Run_'+str(run)+'_'+str(part)+'-*.part')
+	os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+outpath+'Run_'+str(run)+'_'+str(part)+'-*.part > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
+	os.system('rm Run_'+str(run)+'_'+str(part)+'*.part')
 
 	#File consolidation should go here!
 
