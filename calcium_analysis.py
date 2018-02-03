@@ -134,7 +134,7 @@ if rank == 0:
 	for i in np.arange(1,size,1):
 		print check[i-1]==comm.recv(source=i),i
 	os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+outpath+'Run_'+str(run)+'_'+str(part)+'-*.part > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
-	os.system('rm Run_'+str(run)+'_'+str(part)+'*.part')
+	os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'*.part')
 
 	#File consolidation should go here!
 
