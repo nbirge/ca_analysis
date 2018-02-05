@@ -105,7 +105,7 @@ if rank>0:
 
 				if fitting ==1:
 					wo.tail_fit(data=smooth_wave,output=maxamps[0:piece+rem])
-					writebuffer[0:piece+rem]['falltime']=maxamps[0:piece+rem]
+					writebuffer[0:piece+rem]['falltime']=-1.*maxamps[0:piece+rem]
 				if pileup ==1:
 					traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, liltrap, mode='full'), axis=1, arr=data['wave'])/(fast_rise*fall)		#gotta now smooth the waves and then look for peaks
 					wo.pileup(data=traps,workarr=maxamps,thresh=125)
