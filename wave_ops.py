@@ -80,7 +80,12 @@ def pixel_traps(workarr,rise,top):
 		trap(workarr[i],rise,top,means[i])
 
 
-
+def apply_trap(data,trap,output)
+	numwaves=len(data)
+	length=len(data[0]['wave'])
+	for i in range(len(data))
+		bdch=data[i]['board']*8+data[i]['channel']
+		output[i][0:length]=signal.fftconvolve(data[i]['wave'], trap[bdch], mode='full')[0:length]
 
 
 
