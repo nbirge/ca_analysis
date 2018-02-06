@@ -77,14 +77,14 @@ writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 if rank>0:
 	trap = np.zeros((48,length))
 	rise,top,fall=300,200,1100		#not going to use fall
-	wo.pixel_trap(workarr=trap,rise=rise,top=top)
+	wo.pixel_traps(workarr=trap,rise=rise,top=top)
 	b,a = signal.bessel(5,0.05,btype='low',analog=False)
 	maxamps,maxlocs,risetimes=np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece)
 	traps=np.zeros((piece+datachunk%piece,length))
 	if pileup == 1:
 		liltrap=np.zeros((48,length))
 		fast_rise,fast_top=10,4
-		wo.pixel_trap(arr=liltrap,rise=fast_rise,top=fast_top)
+		wo.pixel_traps(workarr=liltrap,rise=fast_rise,top=fast_top)
 	with open(outpath+fname[:-4]+'-'+str(rank)+'.part','w') as f:
 		for i in range(datachunk/piece):
 
@@ -109,13 +109,13 @@ if rank>0:
 					writebuffer[0:piece+rem]['falltime']=-1.*maxamps[0:piece+rem]
 				if pileup ==1:
 #					traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, liltrap, mode='full'), axis=1, arr=data['wave'])/(fast_rise*fall)		#gotta now smooth the waves and then look for peaks #FUUUUUUUUUCK NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
-					wo.apply_trap(workarr=data,trap=liltrap,output=traps)
-					wo.pileup(data=traps,workarr=maxamps,thresh=125)
+					wo.apply_trap(rise=fast_rise,data=data,trap=liltrap,output=traps)
+					wo.pileup(data=traps[0:piece+rem],workarr=maxamps,thresh=125)
 					writebuffer[0:piece+rem]['pileup']=maxamps[0:piece+rem]
 
 #				traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, trap, mode='full'), axis=1, arr=data['wave'])/(rise*fall)	#FUUUUUUUUUCK NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
-				wo.apply_trap(data=data,trap=trap,output=traps)
-				wo.trap_energy(traps,length=length,output=maxamps[0:piece+rem])	#need these maxamps for fitting later...
+				wo.apply_trap(rise=rise,data=data,trap=trap,output=traps)
+				wo.trap_energy(traps[0:piece+rem],length=length,output=maxamps[0:piece+rem])	#need these maxamps for fitting later...
 				writebuffer[0:piece+rem]['energy']=maxamps[0:piece+rem]
 			
 				writebuffer[0:piece+rem].tofile(f)

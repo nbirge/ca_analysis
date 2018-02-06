@@ -2,6 +2,9 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy import signal
 
+#Average fall times for run 131c pixel by pixel
+means=[1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.2096, 1188.8999, 1000, 1263.1642, 1233.1743, 1056.3289, 1213.4717, 1112.0769, 1049.4534, 1219.0482, 1000, 1000, 1077.4932, 1157.1627, 1000, 1163.2235, 1000, 1000, 1000, 1027.103, 1111.1212, 1033.5468, 1109.469, 1022.693, 1929.7336, 1000, 1000, 1124.478, 1073.1306, 1040.2197, 1100.4457, 1045.0566, 1135.8975, 1073.1854, 1000, 1000, 1087.187, 1133.1069, 1005.3494, 1000, 1000, 1000]
+
 def baseline_restore(wave,pretrigger):
 	'''Bitwise & operation and range restore (-=16384) with a baseline restoration \n Use: >> baseline_restore(wavetorestorebaseline,pretrig) '''
 	numwaves = len(wave['wave'])
@@ -73,19 +76,18 @@ def pileup(data,workarr,thresh):
 def pixel_traps(workarr,rise,top):
 	'''48xLENGTH array of traps for each individual pixel | taken via mean of distribution of falltimes for run 137'''
 	length=len(workarr[0])
-	means=[1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.2096, 1188.8999, 1000, 1263.1642, 1233.1743, 1056.3289, 1213.4717, 1112.0769, 1049.4534, 1219.0482, 1000, 1000, 1077.4932, 1157.1627, 1000, 1163.2235, 1000, 1000, 1000, 1027.103, 1111.1212, 1033.5468, 1109.469, 1022.693, 1929.7336, 1000, 1000, 1124.478, 1073.1306, 1040.2197, 1100.4457, 1045.0566, 1135.8975, 1073.1854, 1000, 1000, 1087.187, 1133.1069, 1005.3494, 1000, 1000, 1000]
 	for i in range(len(means)):
 		means[i]=int(means[i])
 	for i in range(len(means)):
 		trap(workarr[i],rise,top,means[i])
 
 
-def apply_trap(data,trap,output)
+def apply_trap(rise,data,trap,output):
 	numwaves=len(data)
 	length=len(data[0]['wave'])
-	for i in range(len(data))
+	for i in range(len(data)):
 		bdch=data[i]['board']*8+data[i]['channel']
-		output[i][0:length]=signal.fftconvolve(data[i]['wave'], trap[bdch], mode='full')[0:length]
+		output[i][0:length]=(signal.fftconvolve(data[i]['wave'], trap[bdch], mode='full')[0:length])/(rise*means[bdch])
 
 
 
