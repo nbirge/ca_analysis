@@ -23,6 +23,7 @@ fsize = os.stat(inpath+fname).st_size
 
 fitting=1
 pileup=1
+pile_thresh=75
 
 length = -1.
 if rank == 0:
@@ -63,7 +64,7 @@ begin=time.time()
 
 
 dtype=[('result','B'),('evID','i'),('board','i'),('channel','i'),('timestamp','Q'),('requesttime','Q'),('risetime','i'),('energy','f')]
-fformat=np.zeros(10,'B')
+fformat=np.zeros(10,'i')
 
 if fitting ==1:
 	dtype.append(('falltime','f'))
@@ -71,7 +72,7 @@ if fitting ==1:
 
 if pileup ==1:
 	dtype.append(('pileup','i'))
-	fformat[1]=1
+	fformat[1]=pile_thresh
 	
 writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 if rank>0:
@@ -110,7 +111,7 @@ if rank>0:
 				if pileup ==1:
 #					traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, liltrap, mode='full'), axis=1, arr=data['wave'])/(fast_rise*fall)		#gotta now smooth the waves and then look for peaks #FUUUUUUUUUCK NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
 					wo.apply_trap(rise=fast_rise,data=data,trap=liltrap,output=traps)
-					wo.pileup(data=traps[0:piece+rem],workarr=maxamps,thresh=125)
+					wo.pileup(data=traps[0:piece+rem],workarr=maxamps,thresh=pile_thresh)
 					writebuffer[0:piece+rem]['pileup']=maxamps[0:piece+rem]
 
 #				traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, trap, mode='full'), axis=1, arr=data['wave'])/(rise*fall)	#FUUUUUUUUUCK NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
@@ -130,7 +131,7 @@ if rank>0:
 
 if rank == 0:
 	check = np.arange(1,size,1)
-	header= np.zeros(1,dtype=[('theader','Q'),('formats','10B')])
+	header= np.zeros(1,dtype=[('theader','Q'),('formats','10i')])
 	header['theader'][0]=theader
 	header['formats'][0:10]=fformat[0:10]
 	header.tofile(outpath+'Run_'+str(run)+'_'+str(part)+'_0.part')
