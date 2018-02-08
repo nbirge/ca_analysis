@@ -131,7 +131,7 @@ if rank>0:
 
 if rank == 0:
 	check = np.arange(1,size,1)
-	header= np.zeros(1,dtype=[('theader','Q'),('formats','10B')])
+	header= np.zeros(1,dtype=[('theader','Q'),('formats','10i')])
 	header['theader'][0]=theader
 	header['formats'][0:10]=fformat[0:10]
 	header.tofile(outpath+'Run_'+str(run)+'_'+str(part)+'_0.part')
