@@ -47,12 +47,12 @@ def gen_output(fname):
 			data_byte_size+=4
 			formatting+=',f'
 			names+=',falltime'
-		if formats[1] == 1:			#For data sets where pileup is determined
+		if formats[1] >= 1:			#For data sets where pileup is determined
 			data_byte_size+=4
 			formatting+=',i'
 			names+=',pileup'
-		numwaves=(os.stat(fname).st_size-(8+1*10))/data_byte_size
-		f.seek(8+1*10)
+		numwaves=(os.stat(fname).st_size-(8+4*10))/data_byte_size
+		f.seek(8+4*10)
 		data=np.core.records.fromfile(f,formats=formatting,shape=numwaves,names=names,byteorder='<')
 		return data,file_timestamp,formats
 			
