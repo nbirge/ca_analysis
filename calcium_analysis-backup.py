@@ -23,8 +23,7 @@ fsize = os.stat(inpath+fname).st_size
 
 fitting=1
 pileup=1
-trapNfit=1
-pile_thresh=110
+pile_thresh=75
 
 length = -1.
 if rank == 0:
@@ -74,11 +73,7 @@ if fitting ==1:
 if pileup ==1:
 	dtype.append(('pileup','i'))
 	fformat[1]=pile_thresh
-
-if trapNfit == 1:
-	dtype.append(('fitenergy','f'))
-	fformat[2]=1
-
+	
 writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 if rank>0:
 	trap = np.zeros((48,length))
@@ -112,12 +107,7 @@ if rank>0:
 
 				if fitting ==1:
 					wo.tail_fit(data=smooth_wave,output=maxamps[0:piece+rem])
-					maxamps[0:piece+rem]*=-1.
-					writebuffer[0:piece+rem]['falltime']=maxamps[0:piece+rem]
-				if trapNfit ==1 and fitting ==1:
-					wo.fitted_trap(data=data,rise=rise,top=top,fall=maxamps[0:piece+rem],output=traps[0:piece+rem])
-					wo.trap_energy(traps=traps[0:piece+rem],length=length,output=maxamps[0:piece+rem])
-					writebuffer[0:piece+rem]['fitenergy'] = maxamps[0:piece+rem]
+					writebuffer[0:piece+rem]['falltime']=-1.*maxamps[0:piece+rem]
 				if pileup ==1:
 #					traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, liltrap, mode='full'), axis=1, arr=data['wave'])/(fast_rise*fall)		#gotta now smooth the waves and then look for peaks #FUUUUUUUUUCK NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
 					wo.apply_trap(rise=fast_rise,data=data,trap=liltrap,output=traps)
@@ -130,7 +120,7 @@ if rank>0:
 				writebuffer[0:piece+rem]['energy']=maxamps[0:piece+rem]
 			
 				writebuffer[0:piece+rem].tofile(f)
-			except ZeroDivisionError:
+			except ValueError:
 				print 'Fuckup occurred here:'
 				print rank,i,row+i*piece+rem,piece+rem
 
@@ -144,14 +134,12 @@ if rank == 0:
 	header= np.zeros(1,dtype=[('theader','Q'),('formats','10i')])
 	header['theader'][0]=theader
 	header['formats'][0:10]=fformat[0:10]
-	with open(outpath+'Run_'+str(run)+'_'+str(part)+'_0.part','wb') as f:
-		header.tofile(f)
-		f.close()
-		print 'Created '+'Run_'+str(run)+'_'+str(part)+'_0.part'
+	with open(outpath+'Run_'+str(run)+'_'+str(part)+'_0.part'): as f:
+		header.tofile(outpath+'Run_'+str(run)+'_'+str(part)+'_0.part') 
 	for i in np.arange(1,size,1):
 		print check[i-1]==comm.recv(source=i),i
 	os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+outpath+'Run_'+str(run)+'_'+str(part)+'-*.part > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
-#	os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'*.part')
+	os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'*.part')
 
 	#File consolidation should go here!
 

@@ -4,7 +4,8 @@ import sys,os
 
 #path,run = str(sys.argv[1]),str(sys.argv[2])
 path = '/lustre/haven/user/nwbirge/'
-runs = range(131,140,1):
+begin,end = int(sys.argv[1]),int(sys.argv[2])+1
+runs = range(begin,end,1):
 for i in runs:
 	run = str(i)
 	print 'Combining all parts of run: '+run
