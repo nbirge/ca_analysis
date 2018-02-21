@@ -25,6 +25,7 @@ def precuts(x):
 	t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
 	trutharray=land(t2-t1>250,t1-t0>250)
 	x=x[1:-1][trutharray]
+	x=x[x['falltime']>200]
 	return x
 
 def pixcut(x,attr,board,channel):

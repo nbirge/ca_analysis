@@ -100,7 +100,9 @@ def fitted_trap(data,rise,top,fall,output):
 		output[i][0:length]=signal.fftconvolve(data[i]['wave'],trp)[0:length]/(rise*int(fall[i]))
 
 
-
+def find_t0(data,output):
+	length = len(data)
+	output[0:length]=np.argmax(data['wave'],axis=1)
 
 	
 

@@ -21,10 +21,19 @@ if outpath[-1] != '/':
 fname='Run_'+str(run)+'_'+str(part)+'.bin'
 fsize = os.stat(inpath+fname).st_size
 
-fitting=1
-pileup=1
-trapNfit=1
-pile_thresh=110
+fitting,pileup,trapNfit,findt0 = 0,0,0,0
+
+for i in range(len(sys.argv[:])):
+	if sys.argv[i] == '-f':
+		fitting=1
+	if sys.argv[i] == '-p':
+		pileup=1
+		pile_thresh=int(argv[i+1])
+	if sys.argv[i] == '-tNf':
+		trapNfit=1
+		fitting=1
+	if sys.argv[i] == '-t0':
+		findt0=1
 
 length = -1.
 if rank == 0:
@@ -79,6 +88,10 @@ if trapNfit == 1:
 	dtype.append(('fitenergy','f'))
 	fformat[2]=1
 
+if findt0==1:
+	dtype.append(('t0','i'))
+	fformat[3]=1
+
 writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 if rank>0:
 	trap = np.zeros((48,length))
@@ -106,8 +119,8 @@ if rank>0:
 				writebuffer[0:piece+rem]['result'], writebuffer[0:piece+rem]['evID'], writebuffer[0:piece+rem]['board'], writebuffer[0:piece+rem]['channel'], writebuffer[0:piece+rem]['timestamp'], writebuffer[0:piece+rem]['requesttime'] = data['result'], data['evID'], data['board'], data['channel'], data['timestamp'], data['requesttime']
 				wo.baseline_restore(data,600)		#restores baseline and performs necessary preformatting of the data (data & 16383...)
 				smooth_wave= signal.filtfilt(b,a,data['wave'])
-				wo.maxes(waves=smooth_wave,startpoint=500,wavelength=length,maxamps=maxamps[0:piece+rem],maxlocs=maxamps[0:piece+rem])
-				wo.rises(smooth_wave,maxamps[0:piece+rem],maxamps[0:piece+rem],risetimes[0:piece+rem])
+				wo.maxes(waves=data['wave'],startpoint=500,wavelength=length,maxamps=maxamps[0:piece+rem],maxlocs=maxamps[0:piece+rem])
+				wo.rises(data['wave'],maxamps[0:piece+rem],maxamps[0:piece+rem],risetimes[0:piece+rem])
 				writebuffer[0:piece+rem]['risetime']=risetimes[0:piece+rem]
 
 				if fitting ==1:
@@ -123,6 +136,9 @@ if rank>0:
 					wo.apply_trap(rise=fast_rise,data=data,trap=liltrap,output=traps)
 					wo.pileup(data=traps[0:piece+rem],workarr=maxamps,thresh=pile_thresh)
 					writebuffer[0:piece+rem]['pileup']=maxamps[0:piece+rem]
+				if findt0==1:
+					wo.find_t0(data=data,output=maxamps)
+					writebuffer[0:piece+rem]['t0']=maxamps[0:piece+rem]
 
 #				traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, trap, mode='full'), axis=1, arr=data['wave'])/(rise*fall)	#FUUUUUUUUUCK NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
 				wo.apply_trap(rise=rise,data=data,trap=trap,output=traps)
@@ -151,7 +167,7 @@ if rank == 0:
 	for i in np.arange(1,size,1):
 		print check[i-1]==comm.recv(source=i),i
 	os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+outpath+'Run_'+str(run)+'_'+str(part)+'-*.part > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
-#	os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'*.part')
+	os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'*.part')
 
 	#File consolidation should go here!
 
