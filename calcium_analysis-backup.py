@@ -21,19 +21,9 @@ if outpath[-1] != '/':
 fname='Run_'+str(run)+'_'+str(part)+'.bin'
 fsize = os.stat(inpath+fname).st_size
 
-fitting,pileup,trapNfit,findt0 = 0,0,0,0
-
-for i in range(len(sys.argv[:])):
-	if sys.argv[i] == '-f':
-		fitting=1
-	if sys.argv[i] == '-p':
-		pileup=1
-		pile_thresh=int(argv[i+1])
-	if sys.argv[i] == '-tNf':
-		trapNfit=1
-		fitting=1
-	if sys.argv[i] == '-t0':
-		findt0=1
+fitting=1
+pileup=1
+pile_thresh=75
 
 length = -1.
 if rank == 0:
@@ -83,15 +73,7 @@ if fitting ==1:
 if pileup ==1:
 	dtype.append(('pileup','i'))
 	fformat[1]=pile_thresh
-
-if trapNfit == 1:
-	dtype.append(('fitenergy','f'))
-	fformat[2]=1
-
-if findt0==1:
-	dtype.append(('t0','i'))
-	fformat[3]=1
-
+	
 writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 if rank>0:
 	trap = np.zeros((48,length))
@@ -119,26 +101,18 @@ if rank>0:
 				writebuffer[0:piece+rem]['result'], writebuffer[0:piece+rem]['evID'], writebuffer[0:piece+rem]['board'], writebuffer[0:piece+rem]['channel'], writebuffer[0:piece+rem]['timestamp'], writebuffer[0:piece+rem]['requesttime'] = data['result'], data['evID'], data['board'], data['channel'], data['timestamp'], data['requesttime']
 				wo.baseline_restore(data,600)		#restores baseline and performs necessary preformatting of the data (data & 16383...)
 				smooth_wave= signal.filtfilt(b,a,data['wave'])
-				wo.maxes(waves=data['wave'],startpoint=500,wavelength=length,maxamps=maxamps[0:piece+rem],maxlocs=maxamps[0:piece+rem])
-				wo.rises(data['wave'],maxamps[0:piece+rem],maxamps[0:piece+rem],risetimes[0:piece+rem])
+				wo.maxes(waves=smooth_wave,startpoint=500,wavelength=length,maxamps=maxamps[0:piece+rem],maxlocs=maxamps[0:piece+rem])
+				wo.rises(smooth_wave,maxamps[0:piece+rem],maxamps[0:piece+rem],risetimes[0:piece+rem])
 				writebuffer[0:piece+rem]['risetime']=risetimes[0:piece+rem]
 
 				if fitting ==1:
 					wo.tail_fit(data=smooth_wave,output=maxamps[0:piece+rem])
-					maxamps[0:piece+rem]*=-1.
-					writebuffer[0:piece+rem]['falltime']=maxamps[0:piece+rem]
-				if trapNfit ==1 and fitting ==1:
-					wo.fitted_trap(data=data,rise=rise,top=top,fall=maxamps[0:piece+rem],output=traps[0:piece+rem])
-					wo.trap_energy(traps=traps[0:piece+rem],length=length,output=maxamps[0:piece+rem])
-					writebuffer[0:piece+rem]['fitenergy'] = maxamps[0:piece+rem]
+					writebuffer[0:piece+rem]['falltime']=-1.*maxamps[0:piece+rem]
 				if pileup ==1:
 #					traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, liltrap, mode='full'), axis=1, arr=data['wave'])/(fast_rise*fall)		#gotta now smooth the waves and then look for peaks #FUUUUUUUUUCK NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
 					wo.apply_trap(rise=fast_rise,data=data,trap=liltrap,output=traps)
 					wo.pileup(data=traps[0:piece+rem],workarr=maxamps,thresh=pile_thresh)
 					writebuffer[0:piece+rem]['pileup']=maxamps[0:piece+rem]
-				if findt0==1:
-					wo.find_t0(data=data,output=maxamps)
-					writebuffer[0:piece+rem]['t0']=maxamps[0:piece+rem]
 
 #				traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, trap, mode='full'), axis=1, arr=data['wave'])/(rise*fall)	#FUUUUUUUUUCK NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
 				wo.apply_trap(rise=rise,data=data,trap=trap,output=traps)
@@ -146,7 +120,7 @@ if rank>0:
 				writebuffer[0:piece+rem]['energy']=maxamps[0:piece+rem]
 			
 				writebuffer[0:piece+rem].tofile(f)
-			except ZeroDivisionError:
+			except ValueError:
 				print 'Fuckup occurred here:'
 				print rank,i,row+i*piece+rem,piece+rem
 
@@ -160,10 +134,8 @@ if rank == 0:
 	header= np.zeros(1,dtype=[('theader','Q'),('formats','10i')])
 	header['theader'][0]=theader
 	header['formats'][0:10]=fformat[0:10]
-	with open(outpath+'Run_'+str(run)+'_'+str(part)+'_0.part','wb') as f:
-		header.tofile(f)
-		f.close()
-		print 'Created '+'Run_'+str(run)+'_'+str(part)+'_0.part'
+	with open(outpath+'Run_'+str(run)+'_'+str(part)+'_0.part'): as f:
+		header.tofile(outpath+'Run_'+str(run)+'_'+str(part)+'_0.part') 
 	for i in np.arange(1,size,1):
 		print check[i-1]==comm.recv(source=i),i
 	os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+outpath+'Run_'+str(run)+'_'+str(part)+'-*.part > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
