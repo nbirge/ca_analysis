@@ -28,7 +28,7 @@ for i in range(len(sys.argv[:])):
 		fitting=1
 	if sys.argv[i] == '-p':
 		pileup=1
-		pile_thresh=int(argv[i+1])
+		pile_thresh=int(sys.argv[i+1])
 	if sys.argv[i] == '-tNf':
 		trapNfit=1
 		fitting=1

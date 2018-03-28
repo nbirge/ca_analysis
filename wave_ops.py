@@ -55,16 +55,30 @@ def trap_energy(traps,length,output):
 			output[i]=-1.
 
 def tail_fit(data,output):
-	'''Data should be smoothed beforehand.'''
-	length = len(data[0])
-	t = np.arange(length)
-	line = lambda t,a,b: a+b*t[1200:2000]
-	guess = [0.,1000.]
+	'''Data should be smoothed beforehand. AND data is column of waveforms (not structured array)'''
+	length= len(data[0])
+	t= np.arange(length)
+	fitpars=np.zeros(3)
 	for i in range(len(data)):
-		if np.any(data[i][1200:2000]<0.):
-			output[i] = np.array([-0,0],dtype='f')[0]
-		else:
-			output[i]=1./curve_fit(line,t,np.log(data[i][1200:2000]),p0=(np.log(np.amax(data[i])),1000.))[0][1]
+		maxbin=np.argmax(data[i])
+		if maxbin > length-800:
+			maxbin=1800
+		tail = lambda t,a,b: a*np.exp(b*t[maxbin+200:length])
+		fitpars = [data[i][maxbin],-1./1000]
+		fitpars = curve_fit(tail,t,data[i][maxbin+200:length],p0=fitpars,ftol=0.1)[0]
+		output[i]=1./fitpars[1]
+
+#OLD taifit code
+#	length = len(data[0])
+#	t = np.arange(length)
+#	line = lambda t,a,b: a+b*t[1200:2000]
+#	guess = [0.,1000.]
+#	for i in range(len(data)):
+#		if np.any(data[i][1200:2000]<0.):
+#			output[i] = np.array([-0,0],dtype='f')[0]
+#		else:
+	#		output[i]=1./curve_fit(line,t,np.log(data[i][1200:2000]),p0=(np.log(np.amax(data[i])),1000.))[0][1]
+
 
 
 def pileup(data,workarr,thresh):
@@ -98,7 +112,6 @@ def fitted_trap(data,rise,top,fall,output):
 	for i in range(numwaves):
 		trap(trp,rise,top,int(fall[i]))
 		output[i][0:length]=signal.fftconvolve(data[i]['wave'],trp)[0:length]/(rise*int(fall[i]))
-
 
 def find_t0(data,output):
 	length = len(data)

@@ -19,8 +19,12 @@ def dblgauss(x,*pars):
 	a,mu,sigma,b,mu1,sigma1=pars
 	return a*np.exp(-1.*(x-mu)**2./(2.*sigma**2.))+b*np.exp(-1.*(x-mu1)**2./(2.*sigma1**2.))
 
+def single_pixel(x,board,channel):
+	'''Returns a subset of x that only contains event with board == board and channel == channel'''
+	return x[land(x['board']==board,x['channel']==channel)]
+
 def precuts(x):
-	x=x[x['energy']>200]
+	x=x[x['energy']>100]
 	x.sort(order='timestamp')
 	t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
 	trutharray=land(t2-t1>250,t1-t0>250)
