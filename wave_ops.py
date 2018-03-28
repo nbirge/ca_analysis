@@ -80,6 +80,7 @@ def tail_fit(data,output):
 	#		output[i]=1./curve_fit(line,t,np.log(data[i][1200:2000]),p0=(np.log(np.amax(data[i])),1000.))[0][1]
 
 
+
 def pileup(data,workarr,thresh):
 	'''Data should be smoothed beforehand'''
 	length=len(data[0])
@@ -111,7 +112,6 @@ def fitted_trap(data,rise,top,fall,output):
 	for i in range(numwaves):
 		trap(trp,rise,top,int(fall[i]))
 		output[i][0:length]=signal.fftconvolve(data[i]['wave'],trp)[0:length]/(rise*int(fall[i]))
-
 
 def find_t0(data,output):
 	length = len(data)
