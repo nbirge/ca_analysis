@@ -24,6 +24,6 @@ for i in range(len(data)):
 	plt.plot(tbins,data['wave'][i,0:length],'b-',label=Title)
 	plt.xlabel('Time /(4 ns)')
 	plt.ylabel('Arbitrary Units')
-	plt.savefig('plots/'+str(Title)+'.png')
+	plt.savefig('plots/wave_display/'+str(Title)+'.png')
 	plt.show()
 
