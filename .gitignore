@@ -1,6 +1,8 @@
 # version control should ignore the following types of files#
 *.pyc
 *.png
+*.part
+*.bin
 
 #except specific example plots saved as Example* in the appropriate sub dir
 !/plots/wave_display/Example_2017_Data.png
