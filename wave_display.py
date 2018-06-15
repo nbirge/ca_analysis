@@ -20,5 +20,10 @@ wo.baseline_restore(data,pretrigger=600)
 
 tbins=np.arange(length)
 for i in range(len(data)):
-	plt.plot(tbins,data['wave'][i,0:length],'b-',label='Raw Wave')
+	Title = str('Raw_Wave'+'_'+path[39:43]+'_'+path[44:49]+'_'+str(run)+'_'+str(part)+'_'+str(int(startrow+i))+'_'+str(startrow))
+	plt.plot(tbins,data['wave'][i,0:length],'b-',label=Title)
+	plt.xlabel('Time /(4 ns)')
+	plt.ylabel('Arbitrary Units')
+	plt.savefig('plots/'+str(Title)+'.png')
 	plt.show()
+

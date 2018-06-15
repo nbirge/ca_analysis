@@ -1,0 +1,3 @@
+# version control should ignore the following types of files#
+*.pyc
+*.png
