@@ -29,24 +29,22 @@ wo.baseline_restore(data,pretrigger=600)
 tbins=np.arange(length)
 
 #Making trap to plot on top of Waveform
-rise,top,fall=100,250,1100
+rise,top,fall=300,200,1073
 trapar= np.zeros(len(tbins))
 wo.trap(trapar,rise,top,fall)
 #
 
-ecut=3000
-
 for i in range(len(data)):
-	convolution=signal.fftconvolve(data[i]['wave'],trapar)[0:length]/(rise*int(fall))
-	if np.max(data[i]['wave']) > ecut:
-		plt.plot(tbins,data['wave'][i,0:length],'b-',label='Raw Wave')
-		plt.plot(tbins,trapar*.1,'r-',label='Convolved shape (scaled by 1/10)')
+	if i%2 == 0:	
+		i+=1
+	for rise in range(100,1100,300):
+		wo.trap(trapar,rise,rise,fall)
 		convolution=signal.fftconvolve(data[i]['wave'],trapar)[0:length]/(rise*int(fall))
-		plt.plot(tbins,convolution[0:len(tbins)],'g-',label='Trapezoid')
-		plt.legend()
-    Title = str('Raw_Wave'+'_'+path[39:43]+'_'+path[44:49]+'_'+str(run)+'_'+str(part)+'_'+str(int(startrow+i))+'_'+str(startrow))
-    plt.plot(tbins,data['wave'][i,0:length],'b-',label=Title)
-    plt.xlabel('Time /(4 ns)')
-    plt.ylabel('Arbitrary Units')
-    plt.savefig('plots/wave_display/'+str(Title)+'.png')
-    plt.show()
+		if np.max(data[i]['wave'])>3000:
+			plt.plot(tbins,data['wave'][i,0:length],'b-',label='Raw Wave')
+			plt.plot(tbins,trapar*1.,'r-',label='Convolved shape')
+			convolution=signal.fftconvolve(data[i]['wave'],trapar)[0:length]/(rise*int(fall))
+			plt.plot(tbins,convolution[0:len(tbins)],'g-',label='Trapezoid')
+			plt.title('Rise, top = '+str(rise))
+			plt.legend()
+			plt.show()
