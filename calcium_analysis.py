@@ -147,7 +147,7 @@ if rank>0:
 			
 				writebuffer[0:piece+rem].tofile(f)
 			except ZeroDivisionError:
-				print 'Fuckup occurred here:'
+				print 'Fuckup occurred here:'   #lol
 				print rank,i,row+i*piece+rem,piece+rem
 
 	end=time.time()
