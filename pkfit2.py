@@ -12,6 +12,8 @@ def lingauss(x,*pars):
     a,mu,sigma,m,b=pars
     return a*np.exp(-(x-mu)**2./(2.*sigma**2.))+m*x+b
 
+savehist=1
+
 
 ebins,erange=1000,[0,5000]
 bd,ch=4,3
@@ -39,6 +41,12 @@ for i in lst:
         chisq= np.sqrt(np.sum((lingauss(fitbins,*pars)-fithist)**2.))
         sigs[count,2:7],sigs[count,7]=pars,chisq/(2*window+1-len(pars))
 
+		if savehist==1:
+			x=np.zeros((len(hist),2))
+			x[:,0]=hist
+			x[:,1]=bins
+			np.save(str(i)'-'str(j)'-363-histbins')
+
 
         data=fr.gen_output(fname+name)[0]
         data=data[data['energy']>3000]
@@ -55,7 +63,11 @@ for i in lst:
         chisq= np.sqrt(np.sum((lingauss(fitbins,*pars)-fithist)**2.))
         psigs[count,2:7],psigs[count,7]=pars,chisq/(2*window+1-len(pars))
 
-
+		if savehist==1:
+			x=np.zeros((len(hist),2))
+			x[:,0]=hist
+			x[:,1]=bins
+			np.save(str(i)'-'str(j)'-pulser-histbins')
 
 	print i,j,sigs[count,4],psigs[count,4]
         count+=1
