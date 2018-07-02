@@ -95,7 +95,7 @@ if findt0==1:
 writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 if rank>0:
 	trap = np.zeros((48,length))
-	rise,top,fall=300,200,1100		#not going to use fall
+	rise,top,fall=30,172,1100		#not going to use fall
 	wo.pixel_traps(workarr=trap,rise=rise,top=top)
 	b,a = signal.bessel(5,0.05,btype='low',analog=False)
 	maxamps,maxlocs,risetimes=np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece)
@@ -132,7 +132,7 @@ if rank>0:
 					wo.trap_energy(traps=traps[0:piece+rem],length=length,output=maxamps[0:piece+rem])
 					writebuffer[0:piece+rem]['fitenergy'] = maxamps[0:piece+rem]
 				if pileup ==1:
-#					traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, liltrap, mode='full'), axis=1, arr=data['wave'])/(fast_rise*fall)		#gotta now smooth the waves and then look for peaks #FUUUUUUUUUCK NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
+#					traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, liltrap, mode='full'), axis=1, arr=data['wave'])/(fast_rise*fall)		#gotta now smooth the waves and then look for peaks #NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
 					wo.apply_trap(rise=fast_rise,data=data,trap=liltrap,output=traps)
 					wo.pileup(data=traps[0:piece+rem],workarr=maxamps,thresh=pile_thresh)
 					writebuffer[0:piece+rem]['pileup']=maxamps[0:piece+rem]
@@ -140,7 +140,7 @@ if rank>0:
 					wo.find_t0(data=data,output=maxamps)
 					writebuffer[0:piece+rem]['t0']=maxamps[0:piece+rem]
 
-#				traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, trap, mode='full'), axis=1, arr=data['wave'])/(rise*fall)	#FUUUUUUUUUCK NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
+#				traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, trap, mode='full'), axis=1, arr=data['wave'])/(rise*fall)	#NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
 				wo.apply_trap(rise=rise,data=data,trap=trap,output=traps)
 				wo.trap_energy(traps[0:piece+rem],length=length,output=maxamps[0:piece+rem])	#need these maxamps for fitting later...
 				writebuffer[0:piece+rem]['energy']=maxamps[0:piece+rem]
@@ -164,10 +164,12 @@ if rank == 0:
 		header.tofile(f)
 		f.close()
 		print 'Created '+'Run_'+str(run)+'_'+str(part)+'_0.part'
+	name=''
 	for i in np.arange(1,size,1):
 		print check[i-1]==comm.recv(source=i),i
-	os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+outpath+'Run_'+str(run)+'_'+str(part)+'-*.part > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
-	os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'*.part')
+		name+=outpath+'Run_'+str(run)+'_'+str(part)+'-'+str(i)+'.part '
+	os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
+	os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name)
 
 	#File consolidation should go here!
 
