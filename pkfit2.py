@@ -36,8 +36,9 @@ for i in lst:
         beg,end = bins[start+amax]-window,bins[start+amax]+window
         fitbins=bins[pd.land(bins>beg,bins<end)]
         fithist = hist[pd.land(bins>beg,bins<end)]
-        pars=[hist[start+amax],bins[start+amax],20,0,0]
-        pars=curve_fit(lingauss,fitbins,fithist,p0=pars,ftol=0.001)[0]
+		weights=np.sqrt(fithist)
+        pars=[hist[start+amax],bins[start+amax],30,0,0]
+        pars=curve_fit(lingauss,fitbins,fithist,p0=pars,sigma=weights)[0]
         chisq= np.sqrt(np.sum((lingauss(fitbins,*pars)-fithist)**2.))
         sigs[count,2:7],sigs[count,7]=pars,chisq/(2*window+1-len(pars))
 
@@ -58,8 +59,9 @@ for i in lst:
         beg,end = bins[start+amax]-window,bins[start+amax]+window
         fitbins=bins[pd.land(bins>beg,bins<end)]
         fithist = hist[pd.land(bins>beg,bins<end)]
-        pars=[hist[start+amax],bins[start+amax],20,0,0]
-        pars=curve_fit(lingauss,fitbins,fithist,p0=pars,ftol=0.001)[0]
+		weights=np.sqrt(fithist)
+        pars=[hist[start+amax],bins[start+amax],30,0,0]
+        pars=curve_fit(lingauss,fitbins,fithist,p0=pars,sigma=weights)[0]
         chisq= np.sqrt(np.sum((lingauss(fitbins,*pars)-fithist)**2.))
         psigs[count,2:7],psigs[count,7]=pars,chisq/(2*window+1-len(pars))
 
