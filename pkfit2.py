@@ -12,6 +12,8 @@ def lingauss(x,*pars):
     a,mu,sigma,m,b=pars
     return a*np.exp(-(x-mu)**2./(2.*sigma**2.))+m*x+b
 
+savehist=1
+
 
 ebins,erange=1000,[0,5000]
 bd,ch=4,3
@@ -34,10 +36,17 @@ for i in lst:
         beg,end = bins[start+amax]-window,bins[start+amax]+window
         fitbins=bins[pd.land(bins>beg,bins<end)]
         fithist = hist[pd.land(bins>beg,bins<end)]
-        pars=[hist[start+amax],bins[start+amax],20,0,0]
-        pars=curve_fit(lingauss,fitbins,fithist,p0=pars,ftol=0.001)[0]
+		weights=np.sqrt(fithist)
+        pars=[hist[start+amax],bins[start+amax],30,0,0]
+        pars=curve_fit(lingauss,fitbins,fithist,p0=pars,sigma=weights)[0]
         chisq= np.sqrt(np.sum((lingauss(fitbins,*pars)-fithist)**2.))
         sigs[count,2:7],sigs[count,7]=pars,chisq/(2*window+1-len(pars))
+
+		if savehist==1:
+			x=np.zeros((len(hist),2))
+			x[:,0]=hist
+			x[:,1]=bins
+			np.save(str(i)'-'str(j)'-363-histbins')
 
 
         data=fr.gen_output(fname+name)[0]
@@ -50,12 +59,17 @@ for i in lst:
         beg,end = bins[start+amax]-window,bins[start+amax]+window
         fitbins=bins[pd.land(bins>beg,bins<end)]
         fithist = hist[pd.land(bins>beg,bins<end)]
-        pars=[hist[start+amax],bins[start+amax],20,0,0]
-        pars=curve_fit(lingauss,fitbins,fithist,p0=pars,ftol=0.001)[0]
+		weights=np.sqrt(fithist)
+        pars=[hist[start+amax],bins[start+amax],30,0,0]
+        pars=curve_fit(lingauss,fitbins,fithist,p0=pars,sigma=weights)[0]
         chisq= np.sqrt(np.sum((lingauss(fitbins,*pars)-fithist)**2.))
         psigs[count,2:7],psigs[count,7]=pars,chisq/(2*window+1-len(pars))
 
-
+		if savehist==1:
+			x=np.zeros((len(hist),2))
+			x[:,0]=hist
+			x[:,1]=bins
+			np.save(str(i)'-'str(j)'-pulser-histbins')
 
 	print i,j,sigs[count,4],psigs[count,4]
         count+=1
