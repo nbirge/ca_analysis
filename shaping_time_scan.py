@@ -170,10 +170,17 @@ for rise in range(100,1100,100):
 					header.tofile(f)
 					f.close()
 					print 'Created '+'Run_'+str(run)+'_'+str(part)+'_0.part'
-				for i in np.arange(1,size,1):
-					print check[i-1]==comm.recv(source=i,tag=i+count*100),i
-				os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+outpath+'Run_'+str(run)+'_'+str(part)+'-*-'+name+'.part > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb'+name+'.bin')
-				os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'*'+name+'.part')
+                for i in np.arange(1,size,1):
+		                print check[i-1]==comm.recv(source=i),i
+		                name+=outpath+'Run_'+str(run)+'_'+str(part)+'-'+str(i)+'.part '
+	                os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
+                    print 'cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin'
+	                os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name)
+                    print 'rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name
+#				for i in np.arange(1,size,1):
+#					print check[i-1]==comm.recv(source=i,tag=i+count*100),i
+#				os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+outpath+'Run_'+str(run)+'_'+str(part)+'-*-'+name+'.part > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb'+name+'.bin')
+#				os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'*'+name+'.part')
 
 				#File consolidation should go here!
 
