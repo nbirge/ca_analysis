@@ -176,7 +176,7 @@ for rise in lst:
                         print check[i-1]==comm.recv(source=i),i
                         fnames+=outpath+'Run_'+str(run)+'_'+str(part)+'-'+str(i)+'-'+name+'.part '
                 os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+fnames+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
-                print 'cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+fnames+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-'name'-comb.bin'
+                print 'cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+fnames+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-'+name+'-comb.bin'
                 os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+fnames)
                 print 'rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+fnames
 #                for i in np.arange(1,size,1):
