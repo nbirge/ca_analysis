@@ -13,7 +13,7 @@ size = comm.Get_size()
 rank = comm.Get_rank()
 
 
-run,part,inpath,outpath = int(sys.argv[1]),int(sys.argv[2]),str(sys.argv[3]),str(sys.argv[4])
+run,part,inpath,outpath,beg,term = int(sys.argv[1]),int(sys.argv[2]),str(sys.argv[3]),str(sys.argv[4]),int(sys.argv[5]),int(sys.argv[6])
 if inpath[-1] != '/':
     inpath+='/'
 if outpath[-1] != '/':
@@ -94,7 +94,7 @@ writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 count=0
 lst=np.concatenate((np.linspace(10,100,10,dtype=int),np.linspace(200,1000,9,dtype=int)))
 for rise in lst:
-    for top in lst:
+    for top in lst[beg:term]:
         if rise>00 or top>00:
             name=str(rise)+'-'+str(top)
             count+=1
