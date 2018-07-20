@@ -6,6 +6,10 @@ import predefined as pd
 from scipy import signal
 import sys
 
+def idealpulse(t,*pars):
+    t0,amp,decay=pars
+    return np.heaviside(t-t0,1.)*amp*np.exp(-(t-t0)/decay)
+
 if len(sys.argv[:]) < 6:
     print 'Input: run part path numwaves startrow'
     sys.exit()
@@ -26,7 +30,7 @@ bd,ch=1,3
 data=pd.single_pixel(data,bd,ch)
 wo.baseline_restore(data,pretrigger=600)
 
-tbins=np.arange(length)
+tbins=np.linspace(0,length-1,length)
 
 #Making trap to plot on top of Waveform
 rise,top,fall=300,100,250
@@ -34,13 +38,17 @@ trapar= np.zeros(len(tbins))
 wo.trap(trapar,rise,top,fall)
 #
 
-emin,emax=0000.,100.
+emin,emax=200.,500.
 
 for i in range(len(data)):
     convolution=signal.fftconvolve(data[i]['wave'],trapar)[0:length]/(rise*int(fall))
     if np.max(data[i]['wave']) > emin and np.max(data[i]['wave'])<emax:
         plt.figure(figsize=(7,5))
         plt.plot(tbins,data['wave'][i,0:length],'b-',label='Raw Waveform')
+        mx=np.argmax(data['wave'][i,0:length])
+        amp=np.mean(data['wave'][i,mx-10:mx],dtype=float)
+        print data['wave'][i,1020:1030]
+        plt.plot(tbins,idealpulse(tbins,*[1010,amp,1100]),'r-',label='Ideal electronic response') 
 #        plt.plot(tbins,trapar*.1,'r-',label='Convolved shape (scaled by 1/10)')
 #        convolution=signal.fftconvolve(data[i]['wave'],trapar)[0:length]/(rise*int(fall))
 #        plt.plot(tbins,convolution[0:len(tbins)],'g-',label='Trapezoid')
