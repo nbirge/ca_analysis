@@ -167,18 +167,18 @@ for rise in lst:
                 header= np.zeros(1,dtype=[('theader','Q'),('formats','10i')])
                 header['theader'][0]=theader
                 header['formats'][0:10]=fformat[0:10]
-                with open(outpath+'Run_'+str(run)+'_'+str(part)+'_0.part','wb') as f:
+                with open(outpath+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part','wb') as f:
                     header.tofile(f)
                     f.close()
-                    print 'Created '+'Run_'+str(run)+'_'+str(part)+'_0.part'
+                    print 'Created '+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part'
                 fnames=''
                 for i in np.arange(1,size,1):
                         print check[i-1]==comm.recv(source=i),i
                         fnames+=outpath+'Run_'+str(run)+'_'+str(part)+'-'+str(i)+'-'+name+'.part '
-                os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+fnames+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-'+name+'-comb.bin')
-                print 'cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+fnames+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-'+name+'-comb.bin'
-                os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+fnames)
-                print 'rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+fnames
+                os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part '+fnames+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-'+name+'-comb.bin')
+                print 'cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part '+fnames+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-'+name+'-comb.bin'
+                os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part '+fnames)
+                print 'rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part '+fnames
 #                for i in np.arange(1,size,1):
 #                    print check[i-1]==comm.recv(source=i,tag=i+count*100),i
 #                os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+outpath+'Run_'+str(run)+'_'+str(part)+'-*-'+name+'.part > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb'+name+'.bin')
