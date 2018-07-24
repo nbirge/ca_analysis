@@ -55,8 +55,8 @@ def calibrate(bins,pixel):
     if pixel=='52W'or pixel == 6:
         return bins/6.2844 + 19.1/6.2844
 
-def pixel(bd,ch):
+def pixel(board,channel):
     names=['Psr','39W','40W','41W','50W','51W','52W','53W','Psr','62W','63W','64W','65W','66W','75W','76W','Psr','77W','78W','87W','88W','89W','N/A','N/A','Psr','39E','40E','41E','50E','51E','52E','53E','Psr','62E','63E','64E','65E','66E','75E','76E','Psr','77E','78E','87E','88E','89E','N/A','N/A']
-    bdch = bd*8+ch
+    bdch = board*8+channel
     return names[bdch]
 
