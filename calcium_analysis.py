@@ -118,14 +118,13 @@ if rank>0:
                 data = fr.raw(path=inpath+fname,length=length,numwaves=piece+rem,row=row+i*piece)
                 writebuffer[0:piece+rem]['result'], writebuffer[0:piece+rem]['evID'], writebuffer[0:piece+rem]['board'], writebuffer[0:piece+rem]['channel'], writebuffer[0:piece+rem]['timestamp'], writebuffer[0:piece+rem]['requesttime'] = data['result'], data['evID'], data['board'], data['channel'], data['timestamp'], data['requesttime']
                 wo.baseline_restore(data,600)        #restores baseline and performs necessary preformatting of the data (data & 16383...)
-                smooth_wave= signal.filtfilt(b,a,data['wave'])
+#                smooth_wave= signal.filtfilt(b,a,data['wave'])
                 wo.maxes(waves=data['wave'],startpoint=500,wavelength=length,maxamps=maxamps[0:piece+rem],maxlocs=maxamps[0:piece+rem])
                 wo.rises(data['wave'],maxamps[0:piece+rem],maxamps[0:piece+rem],risetimes[0:piece+rem])
                 writebuffer[0:piece+rem]['risetime']=risetimes[0:piece+rem]
 
                 if fitting ==1:
-                    wo.tail_fit(data=smooth_wave,output=maxamps[0:piece+rem])
-                    maxamps[0:piece+rem]*=-1.
+                    wo.tail_fit(data=data['wave'],output=maxamps[0:piece+rem])
                     writebuffer[0:piece+rem]['falltime']=maxamps[0:piece+rem]
                 if trapNfit ==1 and fitting ==1:
                     wo.fitted_trap(data=data,rise=rise,top=top,fall=maxamps[0:piece+rem],output=traps[0:piece+rem])
