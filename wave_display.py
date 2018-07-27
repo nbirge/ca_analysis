@@ -38,7 +38,7 @@ trapar= np.zeros(len(tbins))
 wo.trap(trapar,rise,top,fall)
 #
 
-emin,emax=200.,500.
+emin,emax=2500.,5000.
 
 for i in range(len(data)):
     convolution=signal.fftconvolve(data[i]['wave'],trapar)[0:length]/(rise*int(fall))

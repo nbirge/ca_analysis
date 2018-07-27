@@ -132,7 +132,6 @@ for rise in lst:
 
                             if fitting ==1:
                                 wo.tail_fit(data=data['wave'],output=maxamps[0:piece+rem])
-                                maxamps[0:piece+rem]*=-1.
                                 writebuffer[0:piece+rem]['falltime']=maxamps[0:piece+rem]
                             if trapNfit ==1 and fitting ==1:
                                 wo.fitted_trap(data=data,rise=rise,top=top,fall=maxamps[0:piece+rem],output=traps[0:piece+rem])
