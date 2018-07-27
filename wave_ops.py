@@ -72,7 +72,7 @@ def tail_fit(data,output):
                 fitpars[0]*=-1.
             fitpars = curve_fit(tail,t,data[i][maxbin+200:length],p0=fitpars,bounds=([0,0.0005],[5000,0.005]),ftol=1E-5,max_nfev=10000)[0]
             output[i]=1./fitpars[1]
-        except ValueError:
+        except ValueError or ZeroDivisionError:
             output[i] = -1.
 
 #OLD taifit code
