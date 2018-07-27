@@ -32,7 +32,7 @@ def maxes(waves,startpoint,wavelength,maxamps,maxlocs):
     maxlocs[0:numwaves] = np.argmax(waves[0:len(waves),startpoint:wavelength],axis=1)+startpoint
 
 
-def rises(waves,maxamps,maxlocs,rises):
+def rises(waves,maxamps,maxlocs,rises): #THIS COULD BE BETTER (CURRENTLY WILL GRAB THE LAST VALUEs, NOT THE NEAREST TWO)
     t=np.arange(len(waves[0]))
     rises[0:len(rises)]=-1.
     for i in range(len(waves)):
