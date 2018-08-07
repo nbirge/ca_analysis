@@ -59,22 +59,27 @@ def trap_energy(traps,length,output):
 
 def tail_fit(data,output):
     '''Data should be smoothed beforehand. AND data is column of waveforms (not structured array)'''
-    length= len(data[0])
+    length= len(data['wave'][0])
     t= np.arange(length)
     fitpars=np.zeros(3)
     for i in range(len(data)):
         try:
-            maxbin=np.argmax(data[i])
+            bd,ch=data[i]['board'],data[i]['channel']
+            maxbin=np.argmax(data[i]['wave'])
             if maxbin > length-800:
                 maxbin=1800
             tail = lambda t,a,b: a*np.exp(-1.*t[maxbin+200:length]*b)
-            fitpars = [data[i][maxbin],1./means[0]]
+            fitpars = [data[i]['wave'][maxbin],1./means[bd*8+ch]]
             if fitpars[0]<0:
                 fitpars[0]*=-1.
-            fitpars = curve_fit(tail,t,data[i][maxbin+200:length],p0=fitpars,bounds=([0,0.0005],[5000,0.005]),ftol=1E-5,max_nfev=10000)[0]
+            if fitpars[1]> 0.005 or fitpars[1]<0.0005:
+                fitpars[1]=1./1000.
+            fitpars = curve_fit(tail,t,data[i]['wave'][maxbin+200:length],p0=fitpars,bounds=([0,0.0005],[5000,0.005]),ftol=1E-5,max_nfev=10000)[0]
             output[i]=1./fitpars[1]
-        except ValueError or ZeroDivisionError:
-            output[i] = -1.
+        except NameError:
+            print 'hello'
+#        except ValueError or ZeroDivisionError:
+#            output[i] = -1.
 
 #OLD taifit code
 #    length = len(data[0])

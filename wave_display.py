@@ -26,19 +26,19 @@ length=3500
 name= 'Run_'+str(run)+'_'+str(part)+'.bin'
 
 data = fr.raw(path+name,length=length,numwaves=numwaves,row=startrow)
-bd,ch=1,3
+bd,ch=0,6
 data=pd.single_pixel(data,bd,ch)
 wo.baseline_restore(data,pretrigger=600)
 
 tbins=np.linspace(0,length-1,length)
 
 #Making trap to plot on top of Waveform
-rise,top,fall=300,100,250
+rise,top,fall=70,400,250
 trapar= np.zeros(len(tbins))
 wo.trap(trapar,rise,top,fall)
 #
 
-emin,emax=2500.,5000.
+emin,emax=100.,10000.
 
 for i in range(len(data)):
     convolution=signal.fftconvolve(data[i]['wave'],trapar)[0:length]/(rise*int(fall))
@@ -48,10 +48,10 @@ for i in range(len(data)):
         mx=np.argmax(data['wave'][i,0:length])
         amp=np.mean(data['wave'][i,mx-10:mx],dtype=float)
         print data['wave'][i,1020:1030]
-        plt.plot(tbins,idealpulse(tbins,*[1010,amp,1100]),'r-',label='Ideal electronic response') 
+        plt.plot(tbins,idealpulse(tbins,*[1010,amp,fall]),'r-',label='Ideal electronic response') 
 #        plt.plot(tbins,trapar*.1,'r-',label='Convolved shape (scaled by 1/10)')
-#        convolution=signal.fftconvolve(data[i]['wave'],trapar)[0:length]/(rise*int(fall))
-#        plt.plot(tbins,convolution[0:len(tbins)],'g-',label='Trapezoid')
+        convolution=signal.fftconvolve(data[i]['wave'],trapar)[0:length]/(rise*int(fall))
+        plt.plot(tbins,convolution[0:len(tbins)],'g-',label='Trapezoid')
         plt.ylabel('ADC Bins')
         plt.xlabel('Timebins (4 ns/bin)')
         plt.legend()
