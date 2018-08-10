@@ -94,11 +94,25 @@ def tail_fit(data,output):
 
 
 
-def pileup(data,workarr,thresh):
-    '''Data should be smoothed beforehand'''
+def pileup(data,thresh,amplitudes,tdiff,numpeaks):
+    '''Data is a the output of a short trapezoid filter over a set of waveforms'''
     length=len(data[0])
+    mainpkloc=0
     for i in range(len(data)):
-        workarr[i]=np.sum(data[i][signal.argrelmax(data[i,0:length],order=20)[0]]>thresh)
+        peaklocs=signal.argrelmax(data[i,0:length],order=10)[0]
+        peaklocs=peaklocs[data[i][peaklocs]>thresh]
+        numpeaks=len(data[i][peaklocs])
+        if numpeaks > 1:
+            mainpkloc=np.min(peaklocs[peaklocs>950])
+            amplitudes[i]=np.argmax(data[i][peaklocs[peaklocs!=mainpkloc]])
+            tdiff[i]=mainpkloc-peaklocs[peaklocs!=mainpkloc][int(amplitudes[i])]
+            amplitudes[i]=data[i][peaklocs[peaklocs!=mainpkloc]][int(amplitudes[i])]
+        elif numpeaks == 1:
+            amplitudes[i]=data[i][peaklocs[0]]
+            tdiff[i]=peaklocs[0]
+        else:
+            amplitudes[i]=-1
+            tdiff[i]=-1
 
 def pixel_traps(workarr,rise,top):
     '''48xLENGTH array of traps for each individual pixel | taken via mean of distribution of falltimes for run 137'''
