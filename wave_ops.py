@@ -18,7 +18,7 @@ def baseline_restore(wave,pretrigger):
 
 def trap(arr,rise,top,fall):
     '''A trapezoid filter convolving function is stored in arr with parmeters rise,top,fall \n Use >> trap(arr,rise,top,fall) '''
-    r,t,d = int(rise),int(top),int(fall)                                                                                                                                                                 
+    r,t,d = int(rise),int(top), int(fall)                                                                                                                                                                 
     length=len(arr)     
     x=np.arange(length)               
     arr[0:r]= fall+x[0:r]         
@@ -99,10 +99,11 @@ def pileup(data,thresh,amplitudes,tdiff,numpeaks):
     length=len(data[0])
     mainpkloc=0
     for i in range(len(data)):
+        mainpkloc=0
         peaklocs=signal.argrelmax(data[i,0:length],order=10)[0]
         peaklocs=peaklocs[data[i][peaklocs]>thresh]
-        numpeaks=len(data[i][peaklocs])
-        if numpeaks > 1:
+        numpeaks[i]=len(data[i][peaklocs])
+        if numpeaks[i] > 1:
             try:
                 mainpkloc=np.min(peaklocs[peaklocs>950])
             except ValueError:
@@ -110,12 +111,12 @@ def pileup(data,thresh,amplitudes,tdiff,numpeaks):
             amplitudes[i]=np.argmax(data[i][peaklocs[peaklocs!=mainpkloc]])
             tdiff[i]=mainpkloc-peaklocs[peaklocs!=mainpkloc][int(amplitudes[i])]
             amplitudes[i]=data[i][peaklocs[peaklocs!=mainpkloc]][int(amplitudes[i])]
-        elif numpeaks == 1:
+        elif numpeaks[i] == 1:
             amplitudes[i]=data[i][peaklocs[0]]
             tdiff[i]=peaklocs[0]
         else:
-            amplitudes[i]=-1
-            tdiff[i]=-1
+            amplitudes[i]=-10000
+            tdiff[i]=-10000
 
 def pixel_traps(workarr,rise,top):
     '''48xLENGTH array of traps for each individual pixel | taken via mean of distribution of falltimes for run 137'''

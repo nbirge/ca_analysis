@@ -48,9 +48,9 @@ def gen_output(fname):
             formatting+=',f'
             names+=',falltime'
         if formats[1] >= 1:            #For data sets where pileup is determined
-            data_byte_size+=4
-            formatting+=',i'
-            names+=',pileup'
+            data_byte_size+=4+4+4
+            formatting+=',i,i,f'
+            names+=',pileup,pilediff,pileamp'
         if formats[2] == 1:
             data_byte_size+=4
             formatting+=',f'
