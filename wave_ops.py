@@ -68,30 +68,17 @@ def tail_fit(data,output):
             maxbin=np.argmax(data[i]['wave'])
             if maxbin > length-800:
                 maxbin=1800
-            tail = lambda t,a,b: a*np.exp(-1.*t[maxbin+200:length]*b)
+            tail = lambda t,a,b: a*np.exp(-1.*t[maxbin+200:length]/b)
             fitpars = [data[i]['wave'][maxbin],1./means[bd*8+ch]]
             if fitpars[0]<0:
                 fitpars[0]*=-1.
-            if fitpars[1]> 0.005 or fitpars[1]<0.0005:
-                fitpars[1]=1./1000.
-            fitpars = curve_fit(tail,t,data[i]['wave'][maxbin+200:length],p0=fitpars,bounds=([0,0.0005],[np.inf,0.005]),ftol=1E-5,max_nfev=10000)[0]
-            output[i]=1./fitpars[1]
-        except NameError:
-            print 'hello'
-#        except ValueError or ZeroDivisionError:
-#            output[i] = -1.
-
-#OLD taifit code
-#    length = len(data[0])
-#    t = np.arange(length)
-#    line = lambda t,a,b: a+b*t[1200:2000]
-#    guess = [0.,1000.]
-#    for i in range(len(data)):
-#        if np.any(data[i][1200:2000]<0.):
-#            output[i] = np.array([-0,0],dtype='f')[0]
-#        else:
-    #        output[i]=1./curve_fit(line,t,np.log(data[i][1200:2000]),p0=(np.log(np.amax(data[i])),1000.))[0][1]
-
+            if fitpars[1]< 200 or fitpars[1]>5000:
+                fitpars[1]=1000.
+            fitpars = curve_fit(tail,t,data[i]['wave'][maxbin+200:length],p0=fitpars,bounds=([0,200],[np.inf,5000]),ftol=1E-5,max_nfev=10000)[0]
+            output[i]=fitpars[1]
+        except ValueError or ZeroDivisionError:
+            print 'Fitpars= ',fitpars
+            output[i]=-1
 
 
 def pileup(data,thresh,amplitudes,tdiff,numpeaks):
