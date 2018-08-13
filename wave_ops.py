@@ -74,7 +74,7 @@ def tail_fit(data,output):
                 fitpars[0]*=-1.
             if fitpars[1]> 0.005 or fitpars[1]<0.0005:
                 fitpars[1]=1./1000.
-            fitpars = curve_fit(tail,t,data[i]['wave'][maxbin+200:length],p0=fitpars,bounds=([0,0.0005],[5000,0.005]),ftol=1E-5,max_nfev=10000)[0]
+            fitpars = curve_fit(tail,t,data[i]['wave'][maxbin+200:length],p0=fitpars,bounds=([0,0.0005],[np.inf,0.005]),ftol=1E-5,max_nfev=10000)[0]
             output[i]=1./fitpars[1]
         except NameError:
             print 'hello'
