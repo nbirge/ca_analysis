@@ -3,9 +3,9 @@ from scipy.optimize import curve_fit
 from scipy import signal
 
 #Average fall times for run 131c pixel by pixel
-#means=[1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.2096, 1188.8999, 1000, 1263.1642, 1233.1743, 1056.3289, 1213.4717, 1112.0769, 1049.4534, 1219.0482, 1000, 1000, 1077.4932, 1157.1627, 1000, 1163.2235, 1000, 1000, 1000, 1027.103, 1111.1212, 1033.5468, 1109.469, 1022.693, 1929.7336, 1000, 1000, 1124.478, 1073.1306, 1040.2197, 1100.4457, 1045.0566, 1135.8975, 1073.1854, 1000, 1000, 1087.187, 1133.1069, 1005.3494, 1000, 1000, 1000] # UNCOMMENT THIS FOR PRODUCTION DATA
+means=[1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.2096, 1188.8999, 1000, 1263.1642, 1233.1743, 1056.3289, 1213.4717, 1112.0769, 1049.4534, 1219.0482, 1000, 1000, 1077.4932, 1157.1627, 1000, 1163.2235, 1000, 1000, 1000, 1027.103, 1111.1212, 1033.5468, 1109.469, 1022.693, 1929.7336, 1000, 1000, 1124.478, 1073.1306, 1040.2197, 1100.4457, 1045.0566, 1135.8975, 1073.1854, 1000, 1000, 1087.187, 1133.1069, 1005.3494, 1000, 1000, 1000] # UNCOMMENT THIS FOR PRODUCTION DATA
 
-means=np.load('./pulser_means.npy')[:,1]
+#means=np.load('./pulser_means.npy')[:,1]
 
 
 def baseline_restore(wave,pretrigger):
@@ -18,7 +18,7 @@ def baseline_restore(wave,pretrigger):
 
 def trap(arr,rise,top,fall):
     '''A trapezoid filter convolving function is stored in arr with parmeters rise,top,fall \n Use >> trap(arr,rise,top,fall) '''
-    r,t,d = int(rise),int(top),int(fall)                                                                                                                                                                 
+    r,t,d = int(rise),int(top), int(fall)                                                                                                                                                                 
     length=len(arr)     
     x=np.arange(length)               
     arr[0:r]= fall+x[0:r]         
@@ -68,37 +68,42 @@ def tail_fit(data,output):
             maxbin=np.argmax(data[i]['wave'])
             if maxbin > length-800:
                 maxbin=1800
-            tail = lambda t,a,b: a*np.exp(-1.*t[maxbin+200:length]*b)
+            tail = lambda t,a,b: a*np.exp(-1.*t[maxbin+200:length]/b)
             fitpars = [data[i]['wave'][maxbin],1./means[bd*8+ch]]
             if fitpars[0]<0:
                 fitpars[0]*=-1.
-            if fitpars[1]> 0.005 or fitpars[1]<0.0005:
-                fitpars[1]=1./1000.
-            fitpars = curve_fit(tail,t,data[i]['wave'][maxbin+200:length],p0=fitpars,bounds=([0,0.0005],[5000,0.005]),ftol=1E-5,max_nfev=10000)[0]
-            output[i]=1./fitpars[1]
-        except NameError:
-            print 'hello'
-#        except ValueError or ZeroDivisionError:
-#            output[i] = -1.
-
-#OLD taifit code
-#    length = len(data[0])
-#    t = np.arange(length)
-#    line = lambda t,a,b: a+b*t[1200:2000]
-#    guess = [0.,1000.]
-#    for i in range(len(data)):
-#        if np.any(data[i][1200:2000]<0.):
-#            output[i] = np.array([-0,0],dtype='f')[0]
-#        else:
-    #        output[i]=1./curve_fit(line,t,np.log(data[i][1200:2000]),p0=(np.log(np.amax(data[i])),1000.))[0][1]
+            if fitpars[1]< 200 or fitpars[1]>5000:
+                fitpars[1]=1000.
+            fitpars = curve_fit(tail,t,data[i]['wave'][maxbin+200:length],p0=fitpars,bounds=([0,200],[np.inf,5000]),ftol=1E-5,max_nfev=10000)[0]
+            output[i]=fitpars[1]
+        except ValueError or ZeroDivisionError:
+            print 'Fitpars= ',fitpars
+            output[i]=-1
 
 
-
-def pileup(data,workarr,thresh):
-    '''Data should be smoothed beforehand'''
+def pileup(data,thresh,amplitudes,tdiff,numpeaks):
+    '''Data is a the output of a short trapezoid filter over a set of waveforms'''
     length=len(data[0])
+    mainpkloc=0
     for i in range(len(data)):
-        workarr[i]=np.sum(data[i][signal.argrelmax(data[i,0:length],order=20)[0]]>thresh)
+        mainpkloc=0
+        peaklocs=signal.argrelmax(data[i,0:length],order=10)[0]
+        peaklocs=peaklocs[data[i][peaklocs]>thresh]
+        numpeaks[i]=len(data[i][peaklocs])
+        if numpeaks[i] > 1:
+            try:
+                mainpkloc=np.min(peaklocs[peaklocs>950])
+            except ValueError:
+                mainpkloc=np.max(peaklocs)
+            amplitudes[i]=np.argmax(data[i][peaklocs[peaklocs!=mainpkloc]])
+            tdiff[i]=mainpkloc-peaklocs[peaklocs!=mainpkloc][int(amplitudes[i])]
+            amplitudes[i]=data[i][peaklocs[peaklocs!=mainpkloc]][int(amplitudes[i])]
+        elif numpeaks[i] == 1:
+            amplitudes[i]=data[i][peaklocs[0]]
+            tdiff[i]=peaklocs[0]
+        else:
+            amplitudes[i]=-10000
+            tdiff[i]=-10000
 
 def pixel_traps(workarr,rise,top):
     '''48xLENGTH array of traps for each individual pixel | taken via mean of distribution of falltimes for run 137'''

@@ -56,7 +56,7 @@ if rank ==1 :
     datachunk = numrows/(size-1)-1000
     row = 1000
     if datachunk<0:
-        datachunk=numrows/(size-1)        #THIS isn't right
+        datachunk=numrows/(size-1)       
         row = 0
 elif rank>1 and rank< size-1:
     row = (rank-1)*datachunk
@@ -81,7 +81,8 @@ if fitting ==1:
     fformat[0]=1
 
 if pileup ==1:
-    dtype.append(('pileup','i'))
+    for i in [('pileup','i'),('pilediff','i'),('pileamp','f')]:
+        dtype.append(i)
     fformat[1]=pile_thresh
 
 if trapNfit == 1:
@@ -95,7 +96,7 @@ if findt0==1:
 writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 if rank>0:
     trap = np.zeros((48,length))
-    rise,top,fall=30,172,1100        #not going to use fall
+    rise,top,fall=400,70,1100        #not going to use fall
     wo.pixel_traps(workarr=trap,rise=rise,top=top)
     b,a = signal.bessel(5,0.05,btype='low',analog=False)
     maxamps,maxlocs,risetimes=np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece)
@@ -121,32 +122,34 @@ if rank>0:
 #                smooth_wave= signal.filtfilt(b,a,data['wave'])
                 wo.maxes(waves=data['wave'],startpoint=500,wavelength=length,maxamps=maxamps[0:piece+rem],maxlocs=maxamps[0:piece+rem])
                 wo.rises(data['wave'],maxamps[0:piece+rem],maxamps[0:piece+rem],risetimes[0:piece+rem])
-                writebuffer[0:piece+rem]['risetime']=risetimes[0:piece+rem]
+                writebuffer[0:piece+rem]['risetime']=risetimes[0:piece+rem].copy()
 
                 if fitting ==1:
                     wo.tail_fit(data=data,output=maxamps[0:piece+rem])
-                    writebuffer[0:piece+rem]['falltime']=maxamps[0:piece+rem]
+                    writebuffer[0:piece+rem]['falltime']=maxamps[0:piece+rem].copy()
                 if trapNfit ==1 and fitting ==1:
                     wo.fitted_trap(data=data,rise=rise,top=top,fall=maxamps[0:piece+rem],output=traps[0:piece+rem])
                     wo.trap_energy(traps=traps[0:piece+rem],length=length,output=maxamps[0:piece+rem])
-                    writebuffer[0:piece+rem]['fitenergy'] = maxamps[0:piece+rem]
+                    writebuffer[0:piece+rem]['fitenergy'] = maxamps[0:piece+rem].copy()
                 if pileup ==1:
-#                    traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, liltrap, mode='full'), axis=1, arr=data['wave'])/(fast_rise*fall)        #gotta now smooth the waves and then look for peaks #NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
                     wo.apply_trap(rise=fast_rise,data=data,trap=liltrap,output=traps)
-                    wo.pileup(data=traps[0:piece+rem],workarr=maxamps,thresh=pile_thresh)
-                    writebuffer[0:piece+rem]['pileup']=maxamps[0:piece+rem]
+                    wo.pileup(data=traps[0:piece+rem],thresh=pile_thresh,amplitudes=maxamps[0:piece+rem],tdiff=risetimes[0:piece+rem],numpeaks=maxlocs[0:piece+rem])
+                    writebuffer[0:piece+rem]['pileup']=maxlocs[0:piece+rem].copy()
+                    writebuffer[0:piece+rem]['pilediff']=risetimes[0:piece+rem].copy()
+                    writebuffer[0:piece+rem]['pileamp']=maxamps[0:piece+rem].copy()
+
                 if findt0==1:
                     wo.find_t0(data=data,output=maxamps)
-                    writebuffer[0:piece+rem]['t0']=maxamps[0:piece+rem]
+                    writebuffer[0:piece+rem]['t0']=maxamps[0:piece+rem].copy()
 
 #                traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, trap, mode='full'), axis=1, arr=data['wave'])/(rise*fall)    #NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
                 wo.apply_trap(rise=rise,data=data,trap=trap,output=traps)
                 wo.trap_energy(traps[0:piece+rem],length=length,output=maxamps[0:piece+rem])    #need these maxamps for fitting later...
-                writebuffer[0:piece+rem]['energy']=maxamps[0:piece+rem]
+                writebuffer[0:piece+rem]['energy']=maxamps[0:piece+rem].copy()
             
                 writebuffer[0:piece+rem].tofile(f)
             except ZeroDivisionError:
-                print 'Fuckup occurred here:'   #lol
+                print 'F.up occurred here:'   #lol
                 print rank,i,row+i*piece+rem,piece+rem
 
     end=time.time()
@@ -169,6 +172,8 @@ if rank == 0:
         name+=outpath+'Run_'+str(run)+'_'+str(part)+'-'+str(i)+'.part '
     os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
     os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name)
+
+print 'Successfully finished'
 
     #File consolidation should go here!
 
