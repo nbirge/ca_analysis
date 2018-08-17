@@ -37,12 +37,12 @@ def analysis_output(fname):
 def gen_output(fname):
     with open(fname,'rb') as f:
         data=[]
-        formatting = 'B,i,i,i,Q,Q,i,f'
-        names='result,evID,board,channel,timestamp,requesttime,risetime,energy'
+        formatting = 'B,i,i,i,Q,Q,i,f,f'
+        names='result,evID,board,channel,timestamp,requesttime,risetime,energy,pretrigrms'
         file_timestamp=np.fromfile(f,dtype='Q',count=1)[0]
         f.seek(8)
         formats = np.fromfile(f,dtype='10i',count=1)[0]
-        data_byte_size=(1+3*4+2*8+4+4)
+        data_byte_size=(1+3*4+2*8+4+4+4)
         if formats[0]==1:            #For sets with fall times calculated
             data_byte_size+=4
             formatting+=',f'

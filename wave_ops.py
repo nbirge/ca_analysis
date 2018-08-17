@@ -15,6 +15,9 @@ def baseline_restore(wave,pretrigger):
     wave['wave'][wave['wave']>8192]-=16384
     wave['wave']=np.subtract(wave['wave'][0:numwaves],np.mean(wave['wave'][0:numwaves,0:pretrigger],axis=1).reshape((numwaves,1)))
 
+def pretrigger_rms(wave,workarr,pretrig_timebin):
+    workarr[0:len(wave)]=1./np.sqrt(float(pretrig_timebin))*np.sqrt(np.sum(np.square(wave[0:len(wave),0:pretrig_timebin]),axis=1))
+
 
 def trap(arr,rise,top,fall):
     '''A trapezoid filter convolving function is stored in arr with parmeters rise,top,fall \n Use >> trap(arr,rise,top,fall) '''
