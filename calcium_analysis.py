@@ -173,6 +173,8 @@ if rank == 0:
     os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
     os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name)
 
+print 'Successfully finished'
+
     #File consolidation should go here!
 
 
