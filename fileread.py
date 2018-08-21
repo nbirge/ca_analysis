@@ -65,6 +65,36 @@ def gen_output(fname):
         return data,file_timestamp,formats
             
 
+def temp_gen_output(fname):
+    with open(fname,'rb') as f:
+        data=[]
+        formatting = 'B,i,i,i,Q,Q,i,f'
+        names='result,evID,board,channel,timestamp,requesttime,risetime,energy'
+        file_timestamp=np.fromfile(f,dtype='Q',count=1)[0]
+        f.seek(8)
+        formats = np.fromfile(f,dtype='10i',count=1)[0]
+        data_byte_size=(1+3*4+2*8+4+4)
+        if formats[0]==1:            #For sets with fall times calculated
+            data_byte_size+=4
+            formatting+=',f'
+            names+=',falltime'
+        if formats[1] >= 1:            #For data sets where pileup is determined
+            data_byte_size+=4+4+4
+            formatting+=',i,i,f'
+            names+=',pileup,pilediff,pileamp'
+        if formats[2] == 1:
+            data_byte_size+=4
+            formatting+=',f'
+            names+=',fitenergy'
+        if formats[3] == 1:
+            data_byte_size+=4
+            formatting+=',i'
+            names+=',t0'
+        numwaves=(os.stat(fname).st_size-(8+4*10))/data_byte_size
+        f.seek(8+4*10)
+        data=np.core.records.fromfile(f,formats=formatting,shape=numwaves,names=names,byteorder='<')
+        return data,file_timestamp,formats
+
 '''def file_consolidation(path,runnumber)
     x=filter(lambda x: x.startswith('Run_'+str(runnumber)) and x.endswith('-comb.bin') and x!='Run_'+str(runnumber)+'_0-comb.bin',os.listdir(path))
     name='Run_'+str(runnumber)
