@@ -132,7 +132,7 @@ def fitted_trap(data,rise,top,fall,output):
     trp = np.zeros(length)
     for i in range(numwaves):
         trap(trp,rise,top,int(fall[i]))
-        output[i][0:length]=signal.fftconvolve(data[i]['wave'],trp)[0:length]/(rise*int(fall[i]))
+        output[i][0:length]=signal.fftconvolve(data[i]['wave'],trp)[0:length]/(rise*float(fall[i]))
 
 def find_t0(data,output):
     length = len(data)
