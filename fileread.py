@@ -95,6 +95,13 @@ def temp_gen_output(fname):
         data=np.core.records.fromfile(f,formats=formatting,shape=numwaves,names=names,byteorder='<')
         return data,file_timestamp,formats
 
+
+def simulation(fname):
+    dtype={'names':('entry','detector','pixel','timestamp','energy'),'formats':('i4','S1','i4','f4','f4')}
+    data= np.loadtxt(fname,dtype=dtype,delimiter=' ')
+    data['energy']=data['energy']/1.e3
+    return data
+
 '''def file_consolidation(path,runnumber)
     x=filter(lambda x: x.startswith('Run_'+str(runnumber)) and x.endswith('-comb.bin') and x!='Run_'+str(runnumber)+'_0-comb.bin',os.listdir(path))
     name='Run_'+str(runnumber)

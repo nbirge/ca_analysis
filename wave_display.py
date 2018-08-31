@@ -26,33 +26,36 @@ length=3500
 name= 'Run_'+str(run)+'_'+str(part)+'.bin'
 
 data = fr.raw(path+name,length=length,numwaves=numwaves,row=startrow)
-bd,ch=0,6
+bd,ch=4,3
 data=pd.single_pixel(data,bd,ch)
 wo.baseline_restore(data,pretrigger=600)
 
 tbins=np.linspace(0,length-1,length)
 
 #Making trap to plot on top of Waveform
-rise,top,fall=70,400,250
+rise,top,fall=400,70,1050
 trapar= np.zeros(len(tbins))
 wo.trap(trapar,rise,top,fall)
 #
 
 emin,emax=100.,10000.
 
+fs=15
+
 for i in range(len(data)):
     convolution=signal.fftconvolve(data[i]['wave'],trapar)[0:length]/(rise*int(fall))
-    if np.max(data[i]['wave']) > emin and np.max(data[i]['wave'])<emax:
+    if np.max(data[i]['wave']) > emin and np.max(data[i]['wave'])<emax and data['board'][i]==bd and data['channel'][i]==ch:
         plt.figure(figsize=(7,5))
         plt.plot(tbins,data['wave'][i,0:length],'b-',label='Raw Waveform')
         mx=np.argmax(data['wave'][i,0:length])
         amp=np.mean(data['wave'][i,mx-10:mx],dtype=float)
         print data['wave'][i,1020:1030]
-        plt.plot(tbins,idealpulse(tbins,*[1010,amp,fall]),'r-',label='Ideal electronic response') 
-#        plt.plot(tbins,trapar*.1,'r-',label='Convolved shape (scaled by 1/10)')
+#        plt.plot(tbins,idealpulse(tbins,*[1010,amp,fall]),'r-',label='Ideal electronic response') 
+        plt.plot(tbins,trapar*.5,'r-',label='Convolved shape (scaled by 1/2)')
         convolution=signal.fftconvolve(data[i]['wave'],trapar)[0:length]/(rise*int(fall))
         plt.plot(tbins,convolution[0:len(tbins)],'g-',label='Trapezoid')
-        plt.ylabel('ADC Bins')
-        plt.xlabel('Timebins (4 ns/bin)')
+        plt.tick_params(labelsize=fs)
+        plt.ylabel('ADC Bins',fontsize=fs)
+        plt.xlabel('Timebins (4 ns/bin)',fontsize=fs)
         plt.legend()
         plt.show()
