@@ -32,8 +32,8 @@ for i in runs:
 #
 #       CORRUPTION REJECTION
     print 'Removing event corruption for board:'
-    cut=float(len(data))
     data=np.sort(data,order='timestamp')
+    cut=float(len(data))
     y=[]
     size=np.zeros(6,dtype=int)
     for j in range(6):
@@ -47,7 +47,7 @@ for i in runs:
         for i in range(len(x)):
             if i<99:
                 beg = i
-            xx=x[i-beg:i+99]
+            xx=x[i-beg:i+99]    #Maybe just assign xx=x[blah]['requesttime']
             truth1=land(xx['requesttime']<x['timestamp'][i],x['timestamp'][i]<xx['requesttime']+60000/4)
             truth2 = land(xx['requesttime']<x['timestamp'][i]+3500,x['timestamp'][i]<xx['requesttime']+60000/4)
             t[i] = not np.any(land(truth1,truth2))
