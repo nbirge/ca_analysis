@@ -15,6 +15,9 @@ def baseline_restore(wave,pretrigger):
     wave['wave'][wave['wave']>8192]-=16384
     wave['wave']=np.subtract(wave['wave'][0:numwaves],np.mean(wave['wave'][0:numwaves,0:pretrigger],axis=1).reshape((numwaves,1)))
 
+def pretrigger_rms(wave,workarr,pretrig_timebin):
+    workarr[0:len(wave)]=1./np.sqrt(float(pretrig_timebin))*np.sqrt(np.sum(np.square(wave[0:len(wave),0:pretrig_timebin]),axis=1))
+
 
 def trap(arr,rise,top,fall):
     '''A trapezoid filter convolving function is stored in arr with parmeters rise,top,fall \n Use >> trap(arr,rise,top,fall) '''
@@ -129,13 +132,22 @@ def fitted_trap(data,rise,top,fall,output):
     trp = np.zeros(length)
     for i in range(numwaves):
         trap(trp,rise,top,int(fall[i]))
-        output[i][0:length]=signal.fftconvolve(data[i]['wave'],trp)[0:length]/(rise*int(fall[i]))
+        output[i][0:length]=signal.fftconvolve(data[i]['wave'],trp)[0:length]/(rise*float(fall[i]))
 
 def find_t0(data,output):
-    length = len(data)
-    output[0:length]=np.argmax(data['wave'],axis=1)
+    length = len(data['wave'][0])
+    tr=np.arange(length)
+    trap(tr,rise=400.,fall=1050.,top=70)
+    traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, tr, mode='full')[0:length]/(400.*1050.), axis=1, arr=data['wave'])
+    output[0:len(data)]=np.argmax(traps,axis=1)
 
-    
+
+def corruptfft(data,output):
+    freq=np.fft.fftfreq(len(data[0]),d=4E-9)
+    transform=np.abs(np.fft.fft(data,axis=1))
+    transform/=transform[:,0,None]
+    output[0:len(output)]=0
+    output[np.any(transform[:,freq>1.08e8]>0.02)]=1
 
 
 

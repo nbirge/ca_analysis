@@ -73,7 +73,7 @@ piece = int(10000) # 120,000 waveforms in memory < 1GB, there will be datachunk/
 begin=time.time()
 
 
-dtype=[('result','B'),('evID','i'),('board','i'),('channel','i'),('timestamp','Q'),('requesttime','Q'),('risetime','i'),('energy','f')]
+dtype=[('result','B'),('evID','i'),('board','i'),('channel','i'),('timestamp','Q'),('requesttime','Q'),('risetime','i'),('energy','f'),('pretrigrms','f')]
 fformat=np.zeros(10,'i')
 
 if fitting ==1:
@@ -119,6 +119,8 @@ if rank>0:
                 data = fr.raw(path=inpath+fname,length=length,numwaves=piece+rem,row=row+i*piece)
                 writebuffer[0:piece+rem]['result'], writebuffer[0:piece+rem]['evID'], writebuffer[0:piece+rem]['board'], writebuffer[0:piece+rem]['channel'], writebuffer[0:piece+rem]['timestamp'], writebuffer[0:piece+rem]['requesttime'] = data['result'], data['evID'], data['board'], data['channel'], data['timestamp'], data['requesttime']
                 wo.baseline_restore(data,600)        #restores baseline and performs necessary preformatting of the data (data & 16383...)
+                wo.pretrigger_rms(wave=data['wave'],workarr=maxamps,pretrig_timebin=600)
+                writebuffer[0:piece+rem]['pretrigrms']=maxamps[0:piece+rem].copy()
 #                smooth_wave= signal.filtfilt(b,a,data['wave'])
                 wo.maxes(waves=data['wave'],startpoint=500,wavelength=length,maxamps=maxamps[0:piece+rem],maxlocs=maxamps[0:piece+rem])
                 wo.rises(data['wave'],maxamps[0:piece+rem],maxamps[0:piece+rem],risetimes[0:piece+rem])
@@ -172,8 +174,7 @@ if rank == 0:
         name+=outpath+'Run_'+str(run)+'_'+str(part)+'-'+str(i)+'.part '
     os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
     os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name)
-
-print 'Successfully finished'
+    print 'Successfully finished'
 
     #File consolidation should go here!
 

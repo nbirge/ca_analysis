@@ -41,7 +41,7 @@ for i in lst:
             weights=np.sqrt(fithist)
             weights[weights==0]=1
             pars=[hist[start+amax],bins[start+amax],30,1,1]
-            pars=curve_fit(lingauss,fitbins,fithist,p0=pars,sigma=weights,bounds=([0,bins[start+amax]-30,0,-np.inf,-np.inf],[np.inf,bins[start+amax]+30,np.inf,np.inf,np.inf]),maxfev=120000)[0]
+            pars=curve_fit(lingauss,fitbins,fithist,p0=pars,sigma=1./weights,bounds=([0,bins[start+amax]-30,0,-np.inf,-np.inf],[np.inf,bins[start+amax]+30,np.inf,np.inf,np.inf]),maxfev=120000)[0]
             chisq= np.sum(((lingauss(fitbins,*pars)-fithist)/weights)**2.)
             sigs[count,2:7],sigs[count,7]=pars,chisq/(len(fitbins)-len(pars))
 
@@ -64,7 +64,7 @@ for i in lst:
             weights=np.sqrt(fithist)
             weights[weights==0]=1
             pars=[hist[start+amax],bins[start+amax],30,1,1]
-            pars=curve_fit(lingauss,fitbins,fithist,p0=pars,sigma=weights,maxfev=120000)[0]
+            pars=curve_fit(lingauss,fitbins,fithist,p0=pars,sigma=1./weights,maxfev=120000)[0]
             chisq= np.sum(((lingauss(fitbins,*pars)-fithist)/weights)**2.)
             psigs[count,2:7],psigs[count,7]=pars,chisq/(len(fitbins)-len(pars))
 

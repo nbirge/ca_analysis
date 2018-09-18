@@ -4,6 +4,9 @@ import numpy as np
 def land(x,y):
     return np.logical_and(x,y)
 
+def lor(x,y):
+    return np.logical_or(x,y)
+
 def cbins(x):
     return 0.5*(x[:-1]+x[1:])
 
@@ -31,7 +34,7 @@ def precuts(x):
     x=x[1:-1][trutharray]
     for field in x.dtype.names:
         if field == 'falltime':
-            x=x[x['falltime']>200]
+            x=x[land(x['falltime']>200,x['falltime']<2000)]
     return x
 
 def pixcut(x,attr,board,channel):
