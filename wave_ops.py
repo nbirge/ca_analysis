@@ -138,8 +138,10 @@ def find_t0(traps,output):
     length = len(traps[0])
     tr=np.arange(length)
     trap(tr,rise=100.,fall=1050.,top=70)
+    
     trps= np.apply_along_axis(lambda m: signal.fftconvolve(m, tr, mode='full')[0:length]/(400.*1050.), axis=1, arr=traps)
     output[0:len(traps)]=np.argmax(trps,axis=1)
+
 
 
 def corruptfft(data,output):
