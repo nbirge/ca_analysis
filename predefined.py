@@ -32,9 +32,9 @@ def precuts(x):
     t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
     trutharray=land(t2-t1>250,t1-t0>250)
     x=x[1:-1][trutharray]
-    for field in x.dtype.names:
-        if field == 'falltime':
-            x=x[land(x['falltime']>200,x['falltime']<2000)]
+#    for field in x.dtype.names:
+#        if field == 'falltime':
+#            x=x[land(x['falltime']>100,x['falltime']<2000)]
     return x
 
 def pixcut(x,attr,board,channel):

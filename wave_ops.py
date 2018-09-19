@@ -16,7 +16,7 @@ def baseline_restore(wave,pretrigger):
     wave['wave']=np.subtract(wave['wave'][0:numwaves],np.mean(wave['wave'][0:numwaves,0:pretrigger],axis=1).reshape((numwaves,1)))
 
 def pretrigger_rms(wave,workarr,pretrig_timebin):
-    workarr[0:len(wave)]=1./np.sqrt(float(pretrig_timebin))*np.sqrt(np.sum(np.square(wave[0:len(wave),0:pretrig_timebin]),axis=1))
+    workarr[0:len(wave)]=1./np.sqrt(float(pretrig_timebin))*np.sqrt(np.sum(np.power(wave[0:len(wave),0:pretrig_timebin],2.),axis=1))
 
 
 def trap(arr,rise,top,fall):
@@ -77,7 +77,7 @@ def tail_fit(data,output):
                 fitpars[0]*=-1.
             if fitpars[1]< 200 or fitpars[1]>5000:
                 fitpars[1]=1000.
-            fitpars = curve_fit(tail,t,data[i]['wave'][maxbin+200:length],p0=fitpars,bounds=([0,200],[np.inf,5000]),ftol=1E-5,max_nfev=10000)[0]
+            fitpars = curve_fit(tail,t,data[i]['wave'][maxbin+200:length],p0=fitpars,bounds=([0,100],[np.inf,5000]),ftol=1E-3,method='dogbox',max_nfev=10000)[0]
             output[i]=fitpars[1]
         except ValueError or ZeroDivisionError:
             print 'Fitpars= ',fitpars
@@ -134,12 +134,14 @@ def fitted_trap(data,rise,top,fall,output):
         trap(trp,rise,top,int(fall[i]))
         output[i][0:length]=signal.fftconvolve(data[i]['wave'],trp)[0:length]/(rise*float(fall[i]))
 
-def find_t0(data,output):
-    length = len(data['wave'][0])
+def find_t0(traps,output):
+    length = len(traps[0])
     tr=np.arange(length)
     trap(tr,rise=100.,fall=1050.,top=70)
-    traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, tr, mode='full')[0:length]/(400.*1050.), axis=1, arr=data['wave'])
-    output[0:len(data)]=np.argmax(traps,axis=1)
+    
+    trps= np.apply_along_axis(lambda m: signal.fftconvolve(m, tr, mode='full')[0:length]/(400.*1050.), axis=1, arr=traps)
+    output[0:len(traps)]=np.argmax(trps,axis=1)
+
 
 
 def corruptfft(data,output):
