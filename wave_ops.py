@@ -139,12 +139,7 @@ def find_t0(traps,output):
     rise,top.fall=100.,70.,1050.
     tr=np.arange(length)
     trap(tr,rise=100.,fall=1050.,top=70)
-<<<<<<< HEAD
     trps= np.apply_along_axis(lambda m: signal.fftconvolve(m, tr, mode='full')[0:length]/(rise*fall), axis=1, arr=traps)
-=======
-    
-    trps= np.apply_along_axis(lambda m: signal.fftconvolve(m, tr, mode='full')[0:length]/(400.*1050.), axis=1, arr=traps)
->>>>>>> a3a33daafa9a21cfc8d3faa29497d52aad0413fb
     output[0:len(traps)]=np.argmax(trps,axis=1)
 
 
