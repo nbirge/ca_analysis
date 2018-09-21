@@ -136,7 +136,7 @@ def fitted_trap(data,rise,top,fall,output):
 
 def find_t0(traps,output):
     length = len(traps[0])
-    rise,top.fall=100.,70.,1050.
+    rise,top,fall=100.,70.,1050.
     tr=np.arange(length)
     trap(tr,rise=100.,fall=1050.,top=70)
     trps= np.apply_along_axis(lambda m: signal.fftconvolve(m, tr, mode='full')[0:length]/(rise*fall), axis=1, arr=traps)
