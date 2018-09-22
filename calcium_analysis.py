@@ -107,7 +107,7 @@ if rank>0:
         wo.pixel_traps(workarr=liltrap,rise=fast_rise,top=fast_top)
     with open(outpath+fname[:-4]+'-'+str(rank)+'.part','w') as f:
         for i in range(datachunk/piece):
-
+            beg=time.time()
             if i == datachunk/piece-1:
                 rem = datachunk%piece
             else:
@@ -127,7 +127,7 @@ if rank>0:
                 writebuffer[0:piece+rem]['risetime']=risetimes[0:piece+rem].copy()
 
                 if fitting ==1:
-                    wo.tail_fit(data=data,output=maxamps[0:piece+rem])
+                    wo.tail_fit(data=data['wave'],output=maxamps[0:piece+rem])
                     writebuffer[0:piece+rem]['falltime']=maxamps[0:piece+rem].copy()
                 if trapNfit ==1 and fitting ==1:
                     wo.fitted_trap(data=data,rise=rise,top=top,fall=maxamps[0:piece+rem],output=traps[0:piece+rem])
@@ -148,11 +148,12 @@ if rank>0:
                 if findt0==1:
                     wo.find_t0(traps=data['wave'],output=maxamps)
                     writebuffer[0:piece+rem]['t0']=maxamps[0:piece+rem].copy()
-            
                 writebuffer[0:piece+rem].tofile(f)
             except ZeroDivisionError:
                 print 'F.up occurred here:'   #lol
                 print rank,i,row+i*piece+rem,piece+rem
+            en=time.time()
+            print '\n\n',en-beg
 
     end=time.time()
     print 'Rank ',rank,' finished in ',end-begin,' seconds'

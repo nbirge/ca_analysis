@@ -1,11 +1,22 @@
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy import signal
+from scipy.special import factorial
 
 #Average fall times for run 131c pixel by pixel
 means=[1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.2096, 1188.8999, 1000, 1263.1642, 1233.1743, 1056.3289, 1213.4717, 1112.0769, 1049.4534, 1219.0482, 1000, 1000, 1077.4932, 1157.1627, 1000, 1163.2235, 1000, 1000, 1000, 1027.103, 1111.1212, 1033.5468, 1109.469, 1022.693, 1929.7336, 1000, 1000, 1124.478, 1073.1306, 1040.2197, 1100.4457, 1045.0566, 1135.8975, 1073.1854, 1000, 1000, 1087.187, 1133.1069, 1005.3494, 1000, 1000, 1000] # UNCOMMENT THIS FOR PRODUCTION DATA
 
 #means=np.load('./pulser_means.npy')[:,1]
+
+def approxexp(x,length,trunc):
+    out = np.zeros(shape=length)
+    for i in range(trunc):
+        out[0:length]+=np.power(x,i)/factorial(i)
+    return out
+
+def decay(x,*pars):
+    amp,lamda=pars
+    return amp*approxexp(-1.*(x)*lamda,10)
 
 
 def baseline_restore(wave,pretrigger):
@@ -59,30 +70,6 @@ def trap_energy(traps,length,output):
             output[i]=traps[i][(t[0:length-1][t2[i]][0]-t[0:length-1][t1[i]][0])/2+t[0:length-1][t1[i]][0]]
         else:
             output[i]=-1.
-
-def tail_fit(data,output):
-    '''Data should be smoothed beforehand. AND data is column of waveforms (not structured array)'''
-    length= len(data['wave'][0])
-    t= np.arange(length)
-    fitpars=np.zeros(3)
-    for i in range(len(data)):
-        try:
-            bd,ch=data[i]['board'],data[i]['channel']
-            maxbin=np.argmax(data[i]['wave'])
-            if maxbin > length-800:
-                maxbin=1800
-            tail = lambda t,a,b: a*np.exp(-1.*t[maxbin+200:length]/b)
-            fitpars = [data[i]['wave'][maxbin],1./means[bd*8+ch]]
-            if fitpars[0]<0:
-                fitpars[0]*=-1.
-            if fitpars[1]< 200 or fitpars[1]>5000:
-                fitpars[1]=1000.
-            fitpars = curve_fit(tail,t,data[i]['wave'][maxbin+200:length],p0=fitpars,bounds=([0,100],[np.inf,5000]),ftol=1E-3,method='dogbox',max_nfev=10000)[0]
-            output[i]=fitpars[1]
-        except ValueError or ZeroDivisionError:
-            print 'Fitpars= ',fitpars
-            output[i]=-1
-
 
 def pileup(data,thresh,amplitudes,tdiff,numpeaks):
     '''Data is a the output of a short trapezoid filter over a set of waveforms'''
@@ -151,9 +138,54 @@ def corruptfft(data,output):
     output[0:len(output)]=0
     output[np.any(transform[:,freq>1.08e8]>0.02)]=1
 
+def tail_fit(data,output):
+    '''Data should be smoothed beforehand. AND data is column of waveforms (not structured array)'''
+    length= len(data[0])
+    t= np.arange(length)
+    fitpars=np.zeros(2)
+    for i in range(len(data)):
+        try:
+            maxbin=np.argmax(data[i])
+            if maxbin > length-800:
+                maxbin=1800
+            tail = lambda t,a,b: a*np.exp(-1.*(t[maxbin+200:length] -t[maxbin+200])*b)
+            fitpars = [data[i][maxbin+200],0.001]
+            if fitpars[0]<0:
+                fitpars[0]*=-1.
+            if fitpars[1]> 0.005 or fitpars[1]<0.0005:
+                fitpars[1]=.001
+            fitpars = curve_fit(tail,t,data[i][maxbin+200:length],p0=fitpars,bounds=([0,0.0005],[1e4,0.005]),ftol=1E-5,max_nfev=10000)[0]
+            output[i]=fitpars[1]
+        except ZeroDivisionError:
+            print 'Fitpars= ',fitpars
+            output[i]=-1
+    output[0:len(data)]=np.power(output,-1.)[0:len(data)]
+'''
+def tail_fit(data,output):
+    length= len(data['wave'][0])
+    t= np.arange(length)
+    fitpars=np.zeros(2)
+    for i in range(len(data)):
+        try:
+            bd,ch=data[i]['board'],data[i]['channel']
+            maxbin=np.argmax(data[i]['wave'])+100
+            if maxbin > length-1100:
+                maxbin=1800
+            tail = lambda t,a,b: a*approxexp(-1.*(t[maxbin:maxbin+1000] -t[maxbin])*b,1000,5)
+#            tail = lambda t,a,b: a*(1.-t[maxbin:length]*b+np.power(b*t[maxbin:length],2)/2-np.power(b*t[maxbin:length],3)/6.+np.power(b*t[maxbin:length],4)/24.-np.power(b*t[maxbin:length],5)/120.)
+            fitpars = [data[i]['wave'][maxbin],1./means[bd*8+ch]]
+            if fitpars[0]<0:
+                fitpars[0]*=-1.
+            if fitpars[1]> 0.005 or fitpars[1]<0.0005:
+                fitpars[1]=.001
+            fitpars = curve_fit(tail,t,data[i]['wave'][maxbin:maxbin+1000],p0=fitpars,bounds=([0,0.0005],[1e4,0.005]),ftol=1E-3)[0]
+            output[i]=fitpars[1]
+        except ZeroDivisionError:
+            print 'Fitpars= ',fitpars
+            output[i]=-1
+        output=np.power(output,-1.)
 
-
-
+'''
 
 
 
