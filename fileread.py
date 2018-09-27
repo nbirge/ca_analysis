@@ -98,7 +98,7 @@ def temp_gen_output(fname):
 
 def simulation(fname):
     dtype={'names':('entry','detector','pixel','timestamp','energy'),'formats':('i4','S1','i4','f4','f4')}
-    data= np.loadtxt(fname,dtype=dtype,delimiter=' ')
+    data= np.genfromtxt(fname,dtype=dtype,delimiter=' ')
     data['energy']=data['energy']/1.e3
     return data
 

@@ -26,6 +26,15 @@ def single_pixel(x,board,channel):
     '''Returns a subset of x that only contains event with board == board and channel == channel'''
     return x[land(x['board']==board,x['channel']==channel)]
 
+def pixel(board,channel):
+    names=['Psr','39W','40W','41W','50W','51W','52W','53W','Psr','62W','63W','64W','65W','66W','75W','76W','Psr','77W','78W','87W','88W','89W','N/A','N/A','Psr','39E','40E','41E','50E','51E','52E','53E','Psr','62E','63E','64E','65E','66E','75E','76E','Psr','77E','78E','87E','88E','89E','N/A','N/A']
+    bdch = board*8+channel
+    return names[bdch]
+
+def sim_single_pixel(x,board,channel):
+    pix= pixel(board,channel)
+    return x[land(x['detector']==pix[-1],x['pixel']==int(pix[:-1]))]
+
 def precuts(x):
     x=x[x['energy']>100]
     x.sort(order='timestamp')
@@ -60,8 +69,4 @@ def calibrate(bins,pixel):
     if pixel=='52W'or pixel == 6:
         return bins/6.2844 + 19.1/6.2844
 
-def pixel(board,channel):
-    names=['Psr','39W','40W','41W','50W','51W','52W','53W','Psr','62W','63W','64W','65W','66W','75W','76W','Psr','77W','78W','87W','88W','89W','N/A','N/A','Psr','39E','40E','41E','50E','51E','52E','53E','Psr','62E','63E','64E','65E','66E','75E','76E','Psr','77E','78E','87E','88E','89E','N/A','N/A']
-    bdch = board*8+channel
-    return names[bdch]
 
