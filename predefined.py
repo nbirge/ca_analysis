@@ -44,6 +44,8 @@ def precuts(x):
 #    for field in x.dtype.names:
 #        if field == 'falltime':
 #            x=x[land(x['falltime']>100,x['falltime']<2000)]
+    x=x[lor(x['pileup']<2,x['pilediff']<240)]
+    x=x[x['t0']>100]
     return x
 
 def pixcut(x,attr,board,channel):
