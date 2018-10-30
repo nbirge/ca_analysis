@@ -53,6 +53,25 @@ def pixcut(x,attr,board,channel):
         Ex >>> subarray = predefined.pixcut(data,'trap',0,6)'''
     return x[attr][land(x['board']==board,x['channel']==channel)]
 
+
+def sim_spixel_cut(x):
+    '''Returns x[g] where all events of x[g] are isolated to a single pixel'''
+    length=len(x)
+    g=np.ones(len(x),dtype=bool)
+    i=0
+    while i<length-1:
+        if x['entry'][i]!=x['entry'][i+1]:
+            i+=1
+            continue
+        elif x['detector'][i]!=x['detector'][i+1] or x['pixel'][i]!=x['pixel'][i+1]:
+            g[i]=False
+            g[i+1]=False
+            i+=1
+            continue
+        else:
+            i+=1
+    return x[g]
+
 #def combsets(runs):
 #    '''Returns the entered runs as a single numpy array. 
 #    Ex: >>> data = predefined.combsets([131,132,133])'''
