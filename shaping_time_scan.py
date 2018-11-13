@@ -79,7 +79,8 @@ if fitting ==1:
     fformat[0]=1
 
 if pileup ==1:
-    dtype.append(('pileup','i'))
+    for i in [('pileup','i'),('pilediff','i'),('pileamp','f')]:
+        dtype.append(i)
     fformat[1]=pile_thresh
 
 if trapNfit == 1:
@@ -138,13 +139,14 @@ for rise in lst:
                                 wo.trap_energy(traps=traps[0:piece+rem],length=length,output=maxamps[0:piece+rem])
                                 writebuffer[0:piece+rem]['fitenergy'] = maxamps[0:piece+rem]
                             if pileup ==1:
-            #                    traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, liltrap, mode='full'), axis=1, arr=data['wave'])/(fast_rise*fall)        #gotta now smooth the waves and then look for peaks NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
                                 wo.apply_trap(rise=fast_rise,data=data,trap=liltrap,output=traps)
-                                wo.pileup(data=traps[0:piece+rem],workarr=maxamps,thresh=pile_thresh)
-                                writebuffer[0:piece+rem]['pileup']=maxamps[0:piece+rem]
+                                wo.pileup(data=traps[0:piece+rem],thresh=pile_thresh,amplitudes=maxamps[0:piece+rem],tdiff=risetimes[0:piece+rem],numpeaks=maxlocs[0:piece+rem])
+                                writebuffer[0:piece+rem]['pileup']=maxlocs[0:piece+rem].copy()
+                                writebuffer[0:piece+rem]['pilediff']=risetimes[0:piece+rem].copy()
+                                writebuffer[0:piece+rem]['pileamp']=maxamps[0:piece+rem].copy()
                             if findt0==1:
-                                wo.find_t0(data=data,output=maxamps)
-                                writebuffer[0:piece+rem]['t0']=maxamps[0:piece+rem]
+                                wo.find_t0(traps=data['wave'],output=maxamps)
+                                writebuffer[0:piece+rem]['t0']=maxamps[0:piece+rem].copy()
 
             #                traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, trap, mode='full'), axis=1, arr=data['wave'])/(rise*fall)    NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
                             wo.apply_trap(rise=rise,data=data,trap=trap,output=traps)
