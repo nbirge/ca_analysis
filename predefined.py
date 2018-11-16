@@ -63,7 +63,7 @@ def sim_spixel_cut(x):
         if x['entry'][i]!=x['entry'][i+1]:
             i+=1
             continue
-        elif x['detector'][i]!=x['detector'][i+1] or x['pixel'][i]!=x['pixel'][i+1]:
+        elif x['detector'][i]!=x['detector'][i+1] or x['pixel'][i]!=x['pixel'][i+1] or not g[i]:
             g[i]=False
             g[i+1]=False
             i+=1
