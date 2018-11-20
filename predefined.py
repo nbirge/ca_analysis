@@ -41,9 +41,6 @@ def precuts(x):
     t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
     trutharray=land(t2-t1>250,t1-t0>250)
     x=x[1:-1][trutharray]
-#    for field in x.dtype.names:
-#        if field == 'falltime':
-#            x=x[land(x['falltime']>100,x['falltime']<2000)]
     x=x[lor(x['pileup']<2,x['pilediff']<240)]
     x=x[x['t0']>100]
     return x
@@ -71,6 +68,26 @@ def sim_spixel_cut(x):
         else:
             i+=1
     return x[g]
+
+def sim_comb_single_pixel(x):
+    '''Returns an array where all energies corresponding to the the same event number are summed.
+            This expects that x has already been reduced to single pixel data.'''
+    comb=np.zeros_like(x)
+    comb['energy']+=-5000
+    i=0
+    while i < len(x)-1:
+        j=i+1
+        backscattering=x[i]['entry']==x[j]['entry']
+        energy= x['energy'][i]
+        while backscattering:
+            energy+=x['energy'][j]
+            j+=1
+            backscattering=x[i]['entry']==x[j]['entry']
+        comb[i]=x[i]
+        comb[i]['energy']=energy
+        i=j
+    return comb
+
 
 #def combsets(runs):
 #    '''Returns the entered runs as a single numpy array. 
