@@ -4,9 +4,31 @@ from scipy import signal
 from scipy.special import factorial
 
 #Average fall times for run 131c pixel by pixel
-means=[1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.2096, 1188.8999, 1000, 1263.1642, 1233.1743, 1056.3289, 1213.4717, 1112.0769, 1049.4534, 1219.0482, 1000, 1000, 1077.4932, 1157.1627, 1000, 1163.2235, 1000, 1000, 1000, 1027.103, 1111.1212, 1033.5468, 1109.469, 1022.693, 1929.7336, 1000, 1000, 1124.478, 1073.1306, 1040.2197, 1100.4457, 1045.0566, 1135.8975, 1073.1854, 1000, 1000, 1087.187, 1133.1069, 1005.3494, 1000, 1000, 1000] # UNCOMMENT THIS FOR PRODUCTION DATA
+means=np.array([1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.2096, 1188.8999,\
+                1000, 1263.1642, 1233.1743, 1056.3289, 1213.4717, 1112.0769, 1049.4534, 1219.0482,\
+                1000, 1000, 1077.4932, 1157.1627, 1000, 1163.2235, 1000, 1000,\
+                1000, 1027.103, 1111.1212, 1033.5468, 1109.469, 1022.693, 1929.7336, 1000,\
+                1000, 1124.478, 1073.1306, 1040.2197, 1100.4457, 1045.0566, 1135.8975, 1073.1854,\
+                1000, 1000, 1087.187, 1133.1069, 1005.3494, 1000, 1000, 1000])
 
 #means=np.load('./pulser_means.npy')[:,1]
+
+def wave(t,*pars):
+    amp,t0,tau1,tau2=pars
+    return np.heaviside(t-t0,1.)*amp*(np.exp(-(t-t0)/tau1)-np.exp(-(t-t0)/tau2))
+
+def linearCombine(a1,b1,a2,b2,c,t0,tau,rise):# (N,*pars):
+    N=3500
+    t=np.arange(N,dtype=float)
+    v=np.zeros((5,N)) #np.zeros((len(pars),N))
+    t=np.arange(N,dtype=float)
+    w=2*np.pi/3500.
+    v[0,0:N]=a1*np.sin(w*t)
+    v[1,0:N]=b1*np.cos(w*t)
+    v[2,0:N]=a2*np.sin(w/2.*t)
+    v[3,0:N]=b2*np.cos(w/2.*t)
+    v[4,0:N]=c*wave(t,1,t0,tau,rise)
+    return np.sum(v,axis=0)
 
 def approxexp(x,length,trunc):
     out = np.zeros(shape=length)
@@ -32,13 +54,24 @@ def pretrigger_rms(wave,workarr,pretrig_timebin):
 
 def trap(arr,rise,top,fall):
     '''A trapezoid filter convolving function is stored in arr with parmeters rise,top,fall \n Use >> trap(arr,rise,top,fall) '''
-    r,t,d = int(rise),int(top), int(fall)                                                                                                                                                                 
+    r,t,d = int(rise),int(top),int(fall)                                                                                                                                                                 
     length=len(arr)     
     x=np.arange(length)               
-    arr[0:r]= fall+x[0:r]         
-    arr[r+t:r+r+t]=r-d-x[0:r]
+    arr[0:r]= d+x[0:r]         
     arr[r:r+t]=r                          
+    arr[r+t:r+r+t]=r-d-x[0:r]
     arr[r+r+t:length] = 0
+
+def multi_trap(arr,rise,top):
+    shape=arr.shape
+    x=np.zeros(shape)
+    x[0:shape[0],0:shape[1]]=np.arange(shape[1])
+    arr[0:shape[0],0:shape[1]]=np.zeros(shape)
+    arr[0:shape[0],0:rise]=np.matmul(means.reshape((48,1)),np.ones((1,3500)))[:,0:rise]+x[:,0:rise]
+    arr[0:shape[0],rise:rise+top]=rise*np.ones((48,top))
+    arr[0:shape[0],rise+top:2*rise+top]=rise*np.ones((48,rise)) - \
+            np.matmul(means.reshape((48,1)),np.ones((1,3500)))[:,0:rise]-x[:,0:rise]
+    
 
 def maxes(waves,startpoint,wavelength,maxamps,maxlocs):
     '''Maxamps and maxlocs should have the shape (1,numwaves). Each entry will contain the max(amplitude/time) for a given wave in waves'''
@@ -161,6 +194,19 @@ def tail_fit(data,output):
             output[i]=-1
     output[0:len(data)]=np.power(output,-1.)[0:len(data)]
 '''
+def osc_removal(data,outarr):
+    DesignT=np.array([linearCombine(1,0,0,0,0,0), \
+                       linearCombine(0,1,0,0,0,0), \
+                       linearCombine(0,0,1,0,0,0), \
+                       linearCombine(0,0,0,1,0,0), \
+                       linearCombine(0,0,0,0,0,0)])
+    shorttraps=np.zeros((48,len(data['wave'][0])))
+    for i in range(len(data)):
+ 
+
+
+
+
 def tail_fit(data,output):
     length= len(data['wave'][0])
     t= np.arange(length)
