@@ -15,7 +15,7 @@ means=np.array([1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.209
 
 def wave(t,*pars):
     amp,t0,tau1,tau2=pars
-    return np.heaviside(t-t0,1.)*amp*(np.exp(-(t-t0)/tau1)-np.exp(-(t-t0)/tau2))
+    return np.heaviside(t-t0,1.)*amp*(np.exp(-(t-t0)/float(tau1))-np.exp(-(t-t0)/float(tau2)))
 
 def linearCombine(a1,b1,a2,b2,c,t0,tau,rise):# (N,*pars):
     N=3500
