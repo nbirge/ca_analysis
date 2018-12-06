@@ -71,6 +71,7 @@ def multi_trap(arr,rise,top):
     arr[0:shape[0],rise:rise+top]=rise*np.ones((48,top))
     arr[0:shape[0],rise+top:2*rise+top]=rise*np.ones((48,rise)) - \
             np.matmul(means.reshape((48,1)),np.ones((1,3500)))[:,0:rise]-x[:,0:rise]
+    arr[0:shape[0],0:shape[1]]=np.divide(arr[0:shape[0],0:shape[1]],rise*means.reshape((48,1)))
     
 
 def maxes(waves,startpoint,wavelength,maxamps,maxlocs):
@@ -193,20 +194,41 @@ def tail_fit(data,output):
             print 'Fitpars= ',fitpars
             output[i]=-1
     output[0:len(data)]=np.power(output,-1.)[0:len(data)]
-'''
-def osc_removal(data,outarr):
-    DesignT=np.array([linearCombine(1,0,0,0,0,0), \
-                       linearCombine(0,1,0,0,0,0), \
-                       linearCombine(0,0,1,0,0,0), \
-                       linearCombine(0,0,0,1,0,0), \
-                       linearCombine(0,0,0,0,0,0)])
-    shorttraps=np.zeros((48,len(data['wave'][0])))
+
+
+def osc_removal(data):
+    '''Data should have baseline restored '''
+    rise,top=20,1
+    length=len(data['wave'][0])
+    DesignT=np.array([linearCombine(1,0,0,0,0,0,1,1), \
+                       linearCombine(0,1,0,0,0,0,1,1), \
+                       linearCombine(0,0,1,0,0,0,1,1), \
+                       linearCombine(0,0,0,1,0,0,1,1), \
+                       linearCombine(0,0,0,0,0,0,1,1)])
+    t=np.arange(length)
+    shorttraps=np.zeros((48,length))
+    multi_trap(arr=shorttraps,rise=20,top=1)
+    out=np.zeros(length)
+    p=np.zeros(8)
     for i in range(len(data)):
- 
+        bdch=data['board'][i]*8+data['channel'][i]
+        out =signal.fftconvolve(data['wave'][i],shorttraps[bdch], \
+                                'full')[0:length]/float(rise*means[bdch])
+        loc = np.argmax(out)-rise
+        mx  = data['wave'][i,loc+10]
+        DesignT[4,0:length]= wave(t,1,loc,means[bdch],7)
+        a=np.matmul(np.matmul(np.linalg.inv(np.matmul(DesignT,DesignT.T)),\
+                            DesignT),data['wave'][i])
+        p[0:4]=a[0:4]
+        #p[5:8]=loc,means[bdch],7
+        p[4]=0
+        p[5:8]=1
+        data['wave'][i,0:length]-=linearCombine(*p).astype('int16')
+        
 
 
 
-
+'''
 def tail_fit(data,output):
     length= len(data['wave'][0])
     t= np.arange(length)
