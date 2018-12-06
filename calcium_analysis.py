@@ -34,6 +34,8 @@ for i in range(len(sys.argv[:])):
         fitting=1
     if sys.argv[i] == '-t0':
         findt0=1
+    if sys.argv[i] == '-osc_rem':
+        osc_removal=1
 
 length = -1.
 if rank == 0:
@@ -125,7 +127,8 @@ if rank>0:
                 wo.maxes(waves=data['wave'],startpoint=500,wavelength=length,maxamps=maxamps[0:piece+rem],maxlocs=maxamps[0:piece+rem])
                 wo.rises(data['wave'],maxamps[0:piece+rem],maxamps[0:piece+rem],risetimes[0:piece+rem])
                 writebuffer[0:piece+rem]['risetime']=risetimes[0:piece+rem].copy()
-
+                if osc_removal==1:
+                    wo.osc_removal(data)
                 if fitting ==1:
                     wo.tail_fit(data=data['wave'],output=maxamps[0:piece+rem])
                     writebuffer[0:piece+rem]['falltime']=maxamps[0:piece+rem].copy()
