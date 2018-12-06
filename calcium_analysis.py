@@ -21,7 +21,7 @@ if outpath[-1] != '/':
 fname='Run_'+str(run)+'_'+str(part)+'.bin'
 fsize = os.stat(inpath+fname).st_size
 
-fitting,pileup,trapNfit,findt0 = 0,0,0,0
+fitting,pileup,trapNfit,findt0,osc_removal = 0,0,0,0,0
 
 for i in range(len(sys.argv[:])):
     if sys.argv[i] == '-f':
