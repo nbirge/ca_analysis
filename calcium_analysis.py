@@ -34,7 +34,7 @@ for i in range(len(sys.argv[:])):
         fitting=1
     if sys.argv[i] == '-t0':
         findt0=1
-    if sys.argv[i] == '-osc_rem':
+    if sys.argv[i] == '-osc_removal':
         osc_removal=1
 
 length = -1.
