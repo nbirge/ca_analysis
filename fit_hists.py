@@ -72,7 +72,7 @@ with PdfPages('rise,top=200,100.pdf') as pdf:
                 plt.close()
             counts+=1
 
-print max(sigs[:,3]),min(sigs[sigs[:,3]>100][:,3])
+print(max(sigs[:,3]),min(sigs[sigs[:,3]>100][:,3]))
 '''
 with PdfPages('top=100.pdf') as pdf:
     counts=0

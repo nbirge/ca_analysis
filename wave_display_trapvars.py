@@ -8,7 +8,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import sys
 
 if len(sys.argv[:]) < 6:
-    print 'Input: run part path numwaves startrow'
+    print('Input: run part path numwaves startrow')
     sys.exit()
 else:
     run,part,path,numwaves,startrow = sys.argv[1:6]

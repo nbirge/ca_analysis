@@ -21,14 +21,14 @@ dt=[('result', 'u1'), ('evID', '<i4'), ('board', '<i4'), ('channel', '<i4'), ('t
 
 timestamps = np.fromfile(timestampfile,dtype=dt,count = os.stat(timestampfile).st_size/1+12+16+16)
 
-print len(timestamps)
+print(len(timestamps))
 chunk = 10000
 temp= fr.raw(inpath+'Run_'+run+'_0.bin',length=length,row=0,numwaves=1)
 temp=np.zeros(len(timestamps),dtype=temp.dtype)
 count = 0
 for i in range(int(lastpart)+1):
     name = 'Run_'+run+'_'+str(i)+'.bin'
-    print 'Checking '+name+' for timestamps'
+    print('Checking '+name+' for timestamps')
     numwaves= (os.stat(inpath+name).st_size-8)/(1+12+16+4+2*length)
     for i in range(numwaves/chunk):
         rem = 0
@@ -42,7 +42,7 @@ for i in range(int(lastpart)+1):
             if len(x) >0:
 #                print x['board'],x['channel'],x['timestamp']
                 temp[count-1]=x
-print temp['board']
+print(temp['board'])
 wo.baseline_restore(temp,600)
 tbins=np.arange(3500)
 #for i in range(len(temp)):

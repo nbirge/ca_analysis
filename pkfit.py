@@ -18,7 +18,7 @@ savehist=1
 ebins,erange=4000,[0,20000]
 for pixel in range(48):
     bd,ch=pixel/8,pixel%8
-    print 'BOARD = '+str(bd)+' CHANNEL = '+str(ch)
+    print('BOARD = '+str(bd)+' CHANNEL = '+str(ch))
     sigs=np.zeros((361,8))
     psigs = np.zeros((361,8))
     count=0
@@ -54,9 +54,9 @@ for pixel in range(48):
                     x[:,1]=bins
                     np.save(path+str(i)+'-'+str(j)+'-48-histbins-'+str(pixel),x)
                 if count%20 ==0:
-                    print i,j,bd,ch,'\n',sigs[count,2:8]
+                    print(i,j,bd,ch,'\n',sigs[count,2:8])
                 count+=1
-    print sigs
+    print(sigs)
     np.save('./run48/shaping_time_scan-48-'+str(pixel),sigs)
 
 '''

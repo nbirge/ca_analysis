@@ -20,9 +20,10 @@ def raw(path,length,numwaves,row):
     totrows = (fsize-8)/(33+length*2)
     data=[]
     pos = 8+row*(33+length*2)
-    with open(path) as f:
+    with open(path,'rb') as f:
         f.seek(pos)
-        data= np.core.records.fromfile(f,formats='B,i4,i4,i4,Q,Q,i4,(3500)i2',shape=numwaves,names='result,evID,board,channel,timestamp,requesttime,length,wave',byteorder='<')
+        data= np.core.records.fromfile(f, formats= 'B,i4,i4,i4,Q,Q,i4,(3500)i2',shape=numwaves,\
+            names='result,evID,board,channel,timestamp,requesttime,length,wave',byteorder='<')
     return data
 
 def analysis_output(fname):
@@ -59,7 +60,7 @@ def gen_output(fname):
             data_byte_size+=4
             formatting+=',i'
             names+=',t0'
-        numwaves=(os.stat(fname).st_size-(8+4*10))/data_byte_size
+        numwaves=int((os.stat(fname).st_size-(8+4*10))/data_byte_size)
         f.seek(8+4*10)
         data=np.core.records.fromfile(f,formats=formatting,shape=numwaves,names=names,byteorder='<')
         return data,file_timestamp,formats
