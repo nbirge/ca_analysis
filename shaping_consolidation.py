@@ -9,7 +9,7 @@ if len(sys.argv[:])>2:
     end = int(sys.argv[2])+1
 else:
     end = beg+1
-runs = list(range(beg,end,1))
+runs = np.arange(beg,end,1))
 lst = np.concatenate((np.linspace(10,100,10,dtype=int),np.linspace(200,1000,9,dtype=int)))
 for i in runs:
     path='./'+str(i)+'/'
