@@ -11,7 +11,7 @@ def idealpulse(t,*pars):
     return np.heaviside(t-t0,1.)*amp*np.exp(-(t-t0)/decay)
 
 if len(sys.argv[:]) < 6:
-    print 'Input: run part path numwaves startrow'
+    print('Input: run part path numwaves startrow')
     sys.exit()
 else:
     run,part,path,numwaves,startrow = sys.argv[1:6]
@@ -49,7 +49,7 @@ for i in range(len(data)):
         plt.plot(tbins,data['wave'][i,0:length],'b-',label='Raw Waveform')
         mx=np.argmax(data['wave'][i,0:length])
         amp=np.mean(data['wave'][i,mx-10:mx],dtype=float)
-        print data['wave'][i,1020:1030]
+        print(data['wave'][i,1020:1030])
 #        plt.plot(tbins,idealpulse(tbins,*[1010,amp,fall]),'r-',label='Ideal electronic response') 
         plt.plot(tbins,trapar*.5,'r-',label='Convolved shape (scaled by 1/2)')
         convolution=signal.fftconvolve(data[i]['wave'],trapar)[0:length]/(rise*int(fall))

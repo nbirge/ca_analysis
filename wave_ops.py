@@ -101,7 +101,7 @@ def trap_energy(traps,length,output):
     #Fix shit this
     for i in range(numwaves):
         if np.sum(t1[i])>=1 and np.sum(t2[i])>=1:
-            output[i]=traps[i][(t[0:length-1][t2[i]][0]-t[0:length-1][t1[i]][0])/2+t[0:length-1][t1[i]][0]]
+            output[i]=traps[i][int((t[0:length-1][t2[i]][0]-t[0:length-1][t1[i]][0])/2)+t[0:length-1][t1[i]][0]]
         else:
             output[i]=-1.
 
@@ -191,7 +191,7 @@ def tail_fit(data,output):
             fitpars = curve_fit(tail,t,data[i][maxbin+200:length],p0=fitpars,bounds=([0,0.0005],[1e4,0.005]),ftol=1E-5,max_nfev=10000)[0]
             output[i]=fitpars[1]
         except ZeroDivisionError:
-            print 'Fitpars= ',fitpars
+            print('Fitpars= ',fitpars)
             output[i]=-1
     output[0:len(data)]=np.power(output,-1.)[0:len(data)]
 

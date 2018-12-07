@@ -44,7 +44,7 @@ if rank == 0:
         for i in range(1,size):
             comm.send(length,dest=i)
     if (fsize-8)%(33+2*length) != 0:
-        print 'File format incorrect or file corrupted.', fsize
+        print('File format incorrect or file corrupted.', fsize)
 else:
     length = comm.recv(source=0)
 
@@ -118,7 +118,7 @@ for rise in lst:
                         else:
                             rem = 0
     #                    print i,row+i*piece+rem,rank
-                        print i,rise,top,rank
+                        print(i,rise,top,rank)
                         try:
                             writebuffer[0:piece+rem]=0
                             numwaves = piece+rem
@@ -153,11 +153,11 @@ for rise in lst:
             
                             writebuffer[0:piece+rem].tofile(f)
                         except ZeroDivisionError:
-                            print 'ZERODIVISION occurred here:'
-                            print rank,i,row+i*piece+rem,piece+rem
+                            print('ZERODIVISION occurred here:')
+                            print(rank,i,row+i*piece+rem,piece+rem)
 
                 end=time.time()
-                print 'Rank ',rank,' finished in ',end-begin,' seconds'
+                print('Rank ',rank,' finished in ',end-begin,' seconds')
                 comm.send(rank,dest=0,tag=rank+count*100)
 
 
@@ -169,15 +169,15 @@ for rise in lst:
                 with open(outpath+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part','wb') as f:
                     header.tofile(f)
                     f.close()
-                    print 'Created '+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part'
+                    print('Created '+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part')
                 fnames=''
                 for i in np.arange(1,size,1):
-                        print check[i-1]==comm.recv(source=i),i
+                        print(check[i-1]==comm.recv(source=i),i)
                         fnames+=outpath+'Run_'+str(run)+'_'+str(part)+'-'+str(i)+'-'+name+'.part '
                 os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part '+fnames+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-'+name+'-comb.bin')
-                print 'cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part '+fnames+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-'+name+'-comb.bin'
+                print('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part '+fnames+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-'+name+'-comb.bin')
                 os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part '+fnames)
-                print 'rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part '+fnames
+                print('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0-'+name+'.part '+fnames)
 #                for i in np.arange(1,size,1):
 #                    print check[i-1]==comm.recv(source=i,tag=i+count*100),i
 #                os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+outpath+'Run_'+str(run)+'_'+str(part)+'-*-'+name+'.part > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb'+name+'.bin')
@@ -185,6 +185,6 @@ for rise in lst:
 
                 #File consolidation should go here!
 
-print 'Successfully Finished'
+print('Successfully Finished')
 
 

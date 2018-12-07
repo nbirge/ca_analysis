@@ -1,5 +1,6 @@
 #GIT IS NOT COOPERATING!!!
-
+import mpi4py
+mpi4py.rc.recv_mprobe = False
 from mpi4py import MPI
 import numpy as np
 import wave_ops as wo
@@ -22,7 +23,6 @@ fname='Run_'+str(run)+'_'+str(part)+'.bin'
 fsize = os.stat(inpath+fname).st_size
 
 fitting,pileup,trapNfit,findt0,osc_removal = 0,0,0,0,0
-
 for i in range(len(sys.argv[:])):
     if sys.argv[i] == '-f':
         fitting=1
@@ -39,20 +39,20 @@ for i in range(len(sys.argv[:])):
 
 length = -1.
 if rank == 0:
-    with open(inpath+fname) as f:
+    with open(inpath+fname,'rb') as f:
         theader = np.core.records.fromfile(f,formats='Q',shape=1,byteorder='<')[0][0]
         f.seek(8+1+3*4+2*8)
         length=np.core.records.fromfile(f,formats='i4',shape=1,byteorder='<')[0][0]
         for i in range(1,size):
             comm.send(length,dest=i)
     if (fsize-8)%(33+2*length) != 0:
-        print 'File format incorrect or file corrupted.', fsize
+        print('File format incorrect or file corrupted.', fsize)
 else:
     length = comm.recv(source=0)
 
 ####
 numrows = (fsize-8)/(33+2*length)
-datachunk = numrows/(size-1)
+datachunk = int(numrows/(size-1))
 
 if rank ==1 :
     datachunk = numrows/(size-1)-1000
@@ -68,7 +68,7 @@ elif rank == size-1:
     datachunk=numrows/(size-1)+numrows%(size-1)
     if datachunk < 0:
         datachunk = 0
-
+datachunk=int(datachunk)
 
 piece = int(10000) # 120,000 waveforms in memory < 1GB, there will be datachunk/piece iterations per core
 
@@ -107,18 +107,19 @@ if rank>0:
         liltrap=np.zeros((48,length))
         fast_rise,fast_top=10,4
         wo.pixel_traps(workarr=liltrap,rise=fast_rise,top=fast_top)
+
     with open(outpath+fname[:-4]+'-'+str(rank)+'.part','w') as f:
-        for i in range(datachunk/piece):
-            beg=time.time()
+        for i in range(int(datachunk/piece)):
             if i == datachunk/piece-1:
                 rem = datachunk%piece
             else:
                 rem = 0
-            print i,row+i*piece+rem,piece,rank
+            print(i,row+i*piece+rem,piece,rank)
+            sys.stdout.flush()
             try:
                 writebuffer[0:piece+rem]=0
                 numwaves = piece+rem
-                data = fr.raw(path=inpath+fname,length=length,numwaves=piece+rem,row=row+i*piece)
+                data = fr.raw(path=inpath+fname,length=length,numwaves=piece+rem,row=int(row+i*piece))
                 writebuffer[0:piece+rem]['result'], writebuffer[0:piece+rem]['evID'], writebuffer[0:piece+rem]['board'], writebuffer[0:piece+rem]['channel'], writebuffer[0:piece+rem]['timestamp'], writebuffer[0:piece+rem]['requesttime'] = data['result'], data['evID'], data['board'], data['channel'], data['timestamp'], data['requesttime']
                 wo.baseline_restore(data,600)        #restores baseline and performs necessary preformatting of the data (data & 16383...)
                 wo.pretrigger_rms(wave=data['wave'],workarr=maxamps[0:piece+rem],pretrig_timebin=600)
@@ -153,13 +154,12 @@ if rank>0:
                     writebuffer[0:piece+rem]['t0']=maxamps[0:piece+rem].copy()
                 writebuffer[0:piece+rem].tofile(f)
             except ZeroDivisionError:
-                print 'F.up occurred here:'   #lol
-                print rank,i,row+i*piece+rem,piece+rem
-            en=time.time()
-            print '\n\n',en-beg
+                print('F.up occurred here:')   #lol
+                print(rank,i,row+i*piece+rem,piece+rem)
+                sys.stdout.flush()
 
     end=time.time()
-    print 'Rank ',rank,' finished in ',end-begin,' seconds'
+    print('Rank ',rank,' finished in ',end-begin,' seconds')
     comm.send(rank,dest=0)
 
 
@@ -171,14 +171,16 @@ if rank == 0:
     with open(outpath+'Run_'+str(run)+'_'+str(part)+'_0.part','wb') as f:
         header.tofile(f)
         f.close()
-        print 'Created '+'Run_'+str(run)+'_'+str(part)+'_0.part'
+        print('Created '+'Run_'+str(run)+'_'+str(part)+'_0.part')
+        sys.stdout.flush()
     name=''
     for i in np.arange(1,size,1):
-        print check[i-1]==comm.recv(source=i),i
+        print(check[i-1]==comm.recv(source=i),i)
+        sys.stdout.flush()
         name+=outpath+'Run_'+str(run)+'_'+str(part)+'-'+str(i)+'.part '
     os.system('cat '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name+' > '+outpath+'Run_'+str(run)+'_'+str(part)+'-comb.bin')
     os.system('rm '+outpath+'Run_'+str(run)+'_'+str(part)+'_0.part '+name)
-    print 'Successfully finished'
+    print('Successfully finished')
 
     #File consolidation should go here!
 

@@ -60,7 +60,7 @@ if fittype==0:
                 plt.xlim((2100,2300))
                 pdf.savefig()
                 plt.close()
-        print 'gauss ',mini,minj,minchi
+        print('gauss ',mini,minj,minchi)
 
 if fittype==1:
     with PdfPages(fil[:-12]+'-offgauss.pdf') as pdf:
@@ -89,7 +89,7 @@ if fittype==1:
                 plt.xlim((2100,2300))
                 pdf.savefig()
                 plt.close()
-        print 'offgauss ',mini,minj,minchi
+        print('offgauss ',mini,minj,minchi)
 
 
 if fittype==2:
@@ -97,7 +97,7 @@ if fittype==2:
         mini,minj,minchi=100.,100.,100.
         for i in np.linspace(0.1,1.,10):
             for j in np.linspace(0.1,1.,10):
-                print i,j
+                print(i,j)
                 beg,end = bins[start+amax]-window*5*i,bins[start+amax]+window*5*j
                 fitbins=bins[pd.land(bins>beg,bins<end)]
                 fithist = hist[pd.land(bins>beg,bins<end)]
@@ -120,7 +120,7 @@ if fittype==2:
                 plt.xlim((2100,2300))
                 pdf.savefig()
                 plt.close()
-        print 'lingauss ',mini,minj,minchi
+        print('lingauss ',mini,minj,minchi)
 
 if fittype==3:
     with PdfPages(fil[:-12]+'-erfgauss.pdf') as pdf:
@@ -149,4 +149,4 @@ if fittype==3:
                 plt.xlim((2100,2300))
                 pdf.savefig()
                 plt.close()
-        print 'erfgauss ',mini,minj,minchi
+        print('erfgauss ',mini,minj,minchi)

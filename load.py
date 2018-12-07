@@ -3,9 +3,9 @@ import os
 
 
 def help():
-    print 'To use load, just call the load function. Ex: load.load(/path/to/run_84.fin)'
-    print 'This program returns the original data array and a corresponding energy array'
-    print 'The data are arranged in columns as follows: \n Result    EvID    Board    Channel    Timestamp    tau1 (falltime)    tau2 (risetime)    V0    t0    Residual    Energy'
+    print('To use load, just call the load function. Ex: load.load(/path/to/run_84.fin)')
+    print('This program returns the original data array and a corresponding energy array')
+    print('The data are arranged in columns as follows: \n Result    EvID    Board    Channel    Timestamp    tau1 (falltime)    tau2 (risetime)    V0    t0    Residual    Energy')
     return
 
 def load0(path):

@@ -12,32 +12,32 @@ if len(sys.argv[:])>2:
     end = int(sys.argv[2])+1
 else:
     end = beg+1
-runs = range(beg,end,1)
+runs = list(range(beg,end,1))
 
 for i in runs:
     path='./'+str(i)+'/'
-    print 'combining parts of run: '+str(i)
+    print('combining parts of run: '+str(i))
     run=str(i)
     name='Run_'+run
-    x=filter(lambda x: x.startswith('Run_'+str(run)) and x.endswith('-comb.bin') and x!='Run_'+str(run)+'_0-comb.bin',os.listdir(path))
+    x=[x for x in os.listdir(path) if x.startswith('Run_'+str(run)) and x.endswith('-comb.bin') and x!='Run_'+str(run)+'_0-comb.bin']
     x=sorted(x)
-    print x
+    print(x)
     header= np.zeros(1,dtype=[('theader','Q'),('formats','10i')])
 
     data,header['theader'],header['formats'] = fr.gen_output(path+name+'_0-comb.bin')
     for fyle in x:
-        print fyle
+        print(fyle)
         if os.stat(path+fyle).st_size>1000:
             data=np.concatenate((fr.gen_output(path+fyle)[0],data))
 #
 #       CORRUPTION REJECTION
-    print 'Removing event corruption for board:'
+    print('Removing event corruption for board:')
     data=np.sort(data,order='timestamp')
     cut=float(len(data))
     y=[]
     size=np.zeros(6,dtype=int)
     for j in range(6):
-        print j
+        print(j)
         bd=j
         x=data[data['board']==bd]
         t=np.zeros(len(x),dtype=bool)
@@ -60,10 +60,10 @@ for i in runs:
         elif i>0:
             data[int(np.sum(size[0:i])):np.sum(size[0:i])+size[i]]=y[i]
     data=np.sort(data,order='timestamp')
-    print 'Removed %0.2f %% of %0.0f' %((1.-len(data)/cut)*100.,cut)
+    print('Removed %0.2f %% of %0.0f' %((1.-len(data)/cut)*100.,cut))
 
     output=path+'Run_'+run+'-all.dat'
-    print '\n'+output
+    print('\n'+output)
     with open(path+'Run_'+run+'-all.dat','wb') as f:
         header.tofile(f)
         data.tofile(f)
