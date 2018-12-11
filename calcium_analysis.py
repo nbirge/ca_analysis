@@ -53,24 +53,17 @@ else:
 numrows = (fsize-8)/(33+2*length)
 datachunk = int(numrows/(size-1))
 
-if rank ==1 :
-    datachunk = numrows/(size-1)-1000
-    row = 1000
-    if datachunk<0:
-        datachunk=numrows/(size-1)       
-        row = 0
-elif rank>1 and rank< size-1:
+if rank< size-1:
     row = (rank-1)*datachunk
     datachunk= numrows/(size-1)
 elif rank == size-1:
     row = (rank-1)*datachunk
     datachunk=numrows/(size-1)+numrows%(size-1)
-    if datachunk < 0:
-        datachunk = 0
+
 datachunk=int(datachunk)
 
 piece = int(10000) # 120,000 waveforms in memory < 1GB, there will be datachunk/piece iterations per core
-
+print(datachunk,datachunk/piece)
 begin=time.time()
 
 
@@ -109,7 +102,7 @@ if rank>0:
 
     with open(outpath+fname[:-4]+'-'+str(rank)+'.part','w') as f:
         for i in range(int(datachunk/piece)):
-            if i == datachunk/piece-1:
+            if i == int(datachunk/piece-1):
                 rem = datachunk%piece
             else:
                 rem = 0
