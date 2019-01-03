@@ -60,6 +60,10 @@ def gen_output(fname):
             data_byte_size+=4
             formatting+=',i'
             names+=',t0'
+        if formats[4] >0:
+            data_byte_size+=4+4*formats[4]
+            formatting+=',4f,f'
+            names+=',osc_amps,osenergy'
         numwaves=int((os.stat(fname).st_size-(8+4*10))/data_byte_size)
         f.seek(8+4*10)
         data=np.core.records.fromfile(f,formats=formatting,shape=numwaves,names=names,byteorder='<')
@@ -98,7 +102,7 @@ def temp_gen_output(fname):
 
 
 def simulation(fname):
-    dtype={'names':('entry','detector','pixel','timestamp','energy'),'formats':('i4','S1','i4','f4','f4')}
+    dtype={'names':('entry','detector','pixel','timestamp','energy'),'formats':('i4','U1','i4','f4','f4')}
     data= np.genfromtxt(fname,dtype=dtype,delimiter=' ')
     data['energy']=data['energy']/1.e3
     return data

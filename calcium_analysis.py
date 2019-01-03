@@ -63,7 +63,6 @@ elif rank == size-1:
 datachunk=int(datachunk)
 
 piece = int(10000) # 120,000 waveforms in memory < 1GB, there will be datachunk/piece iterations per core
-print(datachunk,datachunk/piece)
 begin=time.time()
 
 
@@ -87,13 +86,19 @@ if findt0==1:
     dtype.append(('t0','i'))
     fformat[3]=1
 
+if osc_removal==1:
+    dtype.append(('osc_amps','4f'))
+    dtype.append(('osenergy','f'))
+    fformat[4]=4            # Equal to the number of sine/cosine functions currently using
+
 writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 if rank>0:
     trap = np.zeros((48,length))
     rise,top,fall=400,70,1100        #not going to use fall
     wo.pixel_traps(workarr=trap,rise=rise,top=top)
-    b,a = signal.bessel(5,0.05,btype='low',analog=False)
-    maxamps,maxlocs,risetimes=np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece)
+#    b,a = signal.bessel(5,0.05,btype='low',analog=False)
+    maxamps,maxlocs,risetimes,osc_amps=np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece),\
+                                       np.zeros(piece+datachunk%piece),np.zeros((piece+datachunk%piece,4),dtype=float)
     traps=np.zeros((piece+datachunk%piece,length))
     if pileup == 1:
         liltrap=np.zeros((48,length))
@@ -120,8 +125,7 @@ if rank>0:
                 wo.maxes(waves=data['wave'],startpoint=500,wavelength=length,maxamps=maxamps[0:piece+rem],maxlocs=maxamps[0:piece+rem])
                 wo.rises(data['wave'],maxamps[0:piece+rem],maxamps[0:piece+rem],risetimes[0:piece+rem])
                 writebuffer[0:piece+rem]['risetime']=risetimes[0:piece+rem].copy()
-                if osc_removal==1:
-                    wo.osc_removal(data)
+
                 if fitting ==1:
                     wo.tail_fit(data=data['wave'],output=maxamps[0:piece+rem])
                     writebuffer[0:piece+rem]['falltime']=maxamps[0:piece+rem].copy()
@@ -136,10 +140,20 @@ if rank>0:
                     writebuffer[0:piece+rem]['pilediff']=risetimes[0:piece+rem].copy()
                     writebuffer[0:piece+rem]['pileamp']=maxamps[0:piece+rem].copy()
 
-#                traps= np.apply_along_axis(lambda m: signal.fftconvolve(m, trap, mode='full'), axis=1, arr=data['wave'])/(rise*fall)    #NOT A GOOD WAY TO DO THIS FOR A SPECIFIC PIXEL!!!!
+#               UNADJUSTED TRAP OUTPUT
                 wo.apply_trap(rise=rise,data=data,trap=trap,output=traps)
                 wo.trap_energy(traps[0:piece+rem],length=length,output=maxamps[0:piece+rem])    #need these maxamps for fitting later...
                 writebuffer[0:piece+rem]['energy']=maxamps[0:piece+rem].copy()
+
+                if osc_removal==1:
+                    wo.osc_removal(data,osc_amps)
+                    writebuffer[0:piece+rem]['osc_amps']=osc_amps[0:piece+rem]
+                    wo.apply_trap(rise=rise,data=data,trap=trap,output=traps)
+                    wo.trap_energy(traps[0:piece+rem],length=length,output=maxamps[0:piece+rem])    #need these maxamps for fitting later...
+                    writebuffer[0:piece+rem]['osenergy']=maxamps[0:piece+rem].copy()
+#                    wo.apply_trap(rise=rise,data=data,trap=trap,output=traps)
+#                    wo.trap_energy(traps[0:piece+rem],length=length,output=osenergy[0:piece+rem])    #need these maxamps for fitting later...
+#                    writebuffer[0:piece+rem]['osenergy']=osenergy[0:piece+rem]
 
                 if findt0==1:
                     wo.find_t0(traps=data['wave'],output=maxamps)
