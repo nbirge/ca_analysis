@@ -4,14 +4,15 @@ from scipy import signal
 from scipy.special import factorial
 
 #Average fall times for run 131c pixel by pixel
-means=np.array([1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.2096, 1188.8999,\
-                1000, 1263.1642, 1233.1743, 1056.3289, 1213.4717, 1112.0769, 1049.4534, 1219.0482,\
-                1000, 1000, 1077.4932, 1157.1627, 1000, 1163.2235, 1000, 1000,\
-                1000, 1027.103, 1111.1212, 1033.5468, 1109.469, 1022.693, 1929.7336, 1000,\
-                1000, 1124.478, 1073.1306, 1040.2197, 1100.4457, 1045.0566, 1135.8975, 1073.1854,\
-                1000, 1000, 1087.187, 1133.1069, 1005.3494, 1000, 1000, 1000])
+#means=np.array([1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.2096, 1188.8999,\
+#                1000, 1263.1642, 1233.1743, 1056.3289, 1213.4717, 1112.0769, 1049.4534, 1219.0482,\
+#                1000, 1000, 1077.4932, 1157.1627, 1000, 1163.2235, 1000, 1000,\
+#                1000, 1027.103, 1111.1212, 1033.5468, 1109.469, 1022.693, 1929.7336, 1000,\
+#                1000, 1124.478, 1073.1306, 1040.2197, 1100.4457, 1045.0566, 1135.8975, 1073.1854,\
+#                1000, 1000, 1087.187, 1133.1069, 1005.3494, 1000, 1000, 1000])
 
 #means=np.load('./pulser_means.npy')[:,1]
+means=np.ones(48,dtype='float')*1250
 
 def wave(t,*pars):
     amp,t0,tau1,tau2=pars
@@ -196,8 +197,13 @@ def tail_fit(data,output):
     output[0:len(data)]=np.power(output,-1.)[0:len(data)]
 
 
-def osc_removal(data):
-    '''Data should have baseline restored '''
+def osc_removal(data,amps):
+    '''Data should have baseline restored. NOTE: This removes oscillation AND returns amplitudes '''
+    cols=4
+    if len(amps) < len(data) or amps.shape[1]!=cols:
+        print('Amplitude array should be larger than data array and have atleast '\
+                +str(cols)+'columns.')
+        return
     rise,top=20,1
     length=len(data['wave'][0])
     DesignT=np.array([linearCombine(1,0,0,0,0,0,1,1), \
@@ -220,6 +226,7 @@ def osc_removal(data):
         a=np.matmul(np.matmul(np.linalg.inv(np.matmul(DesignT,DesignT.T)),\
                             DesignT),data['wave'][i])
         p[0:4]=a[0:4]
+        amps[i,0:cols]=a[0:4]
         #p[5:8]=loc,means[bdch],7
         p[4]=0
         p[5:8]=1
