@@ -15,20 +15,19 @@ from scipy.special import factorial
 means=np.ones(48,dtype='float')*1250
 
 def wave(t,*pars):
-    amp,t0,tau1,tau2=pars
-    return np.heaviside(t-t0,1.)*amp*(np.exp(-(t-t0)/float(tau1))-np.exp(-(t-t0)/float(tau2)))
+    t0,tau1,tau2=pars
+    return np.heaviside(t-t0,1.)*(np.exp(-(t-t0).astype(float)/tau1)-np.exp(-(t-t0).astype(float)/tau2))
 
-def linearCombine(a1,b1,a2,b2,c,t0,tau,rise):# (N,*pars):
+def linearCombine(a1,b1,offset,c,t0,tau,rise):# (N,*pars):
     N=3500
     t=np.arange(N,dtype=float)
-    v=np.zeros((5,N)) #np.zeros((len(pars),N))
+    v=np.zeros((4,N),dtype=float) #np.zeros((len(pars),N))
     t=np.arange(N,dtype=float)
     w=2*np.pi/3500.
     v[0,0:N]=a1*np.sin(w*t)
     v[1,0:N]=b1*np.cos(w*t)
-    v[2,0:N]=a2*np.sin(w/2.*t)
-    v[3,0:N]=b2*np.cos(w/2.*t)
-    v[4,0:N]=c*wave(t,1,t0,tau,rise)
+    v[2,0:N]=c*wave(t,t0,tau,rise)
+    v[3,0:N]=offset*np.ones(N,dtype=float)
     return np.sum(v,axis=0)
 
 def approxexp(x,length,trunc):
@@ -197,42 +196,45 @@ def tail_fit(data,output):
     output[0:len(data)]=np.power(output,-1.)[0:len(data)]
 
 
-def osc_removal(data,amps):
+def osc_removal(data,output):
     '''Data should have baseline restored. NOTE: This removes oscillation AND returns amplitudes '''
-    cols=4
-    if len(amps) < len(data) or amps.shape[1]!=cols:
-        print('Amplitude array should be larger than data array and have atleast '\
-                +str(cols)+'columns.')
-        return
-    rise,top=20,1
+    rise=20
     length=len(data['wave'][0])
-    DesignT=np.array([linearCombine(1,0,0,0,0,0,1,1), \
-                       linearCombine(0,1,0,0,0,0,1,1), \
-                       linearCombine(0,0,1,0,0,0,1,1), \
-                       linearCombine(0,0,0,1,0,0,1,1), \
-                       linearCombine(0,0,0,0,0,0,1,1)])
+    omega=2*np.pi/(length)
     t=np.arange(length)
+    DesignT=np.array([np.sin(omega*t),\
+                      np.cos(omega*t),\
+                      np.ones_like(t),\
+                      np.zeros_like(t)])
     shorttraps=np.zeros((48,length))
-    multi_trap(arr=shorttraps,rise=20,top=1)
+    multi_trap(arr=shorttraps,rise=20,top=0)
     out=np.zeros(length)
-    p=np.zeros(8)
+    numpars=DesignT.shape[0]
+    yhat=np.zeros(length)
+    s2=0
+    if len(output) < len(data) or output.shape[1]!=2*numpars+1:
+        print('Amplitude array should be larger than data array and have atleast '\
+            +str(cols)+'columns.')
+        return
+
     for i in range(len(data)):
         bdch=data['board'][i]*8+data['channel'][i]
         out =signal.fftconvolve(data['wave'][i],shorttraps[bdch], \
                                 'full')[0:length]/float(rise*means[bdch])
         loc = np.argmax(out)-rise
-        mx  = data['wave'][i,loc+10]
-        DesignT[4,0:length]= wave(t,1,loc,means[bdch],7)
-        a=np.matmul(np.matmul(np.linalg.inv(np.matmul(DesignT,DesignT.T)),\
-                            DesignT),data['wave'][i])
-        p[0:4]=a[0:4]
-        amps[i,0:cols]=a[0:4]
-        #p[5:8]=loc,means[bdch],7
-        p[4]=0
-        p[5:8]=1
-        data['wave'][i,0:length]-=linearCombine(*p).astype('int16')
         
+        DesignT[numpars-1,0:length]= wave(t,loc,means[bdch],6)
+        output[i,0:numpars]=np.matmul(np.matmul(np.linalg.inv(np.matmul(DesignT,DesignT.T)),\
+                            DesignT),data['wave'][i])
+        yhat=np.matmul(DesignT.T,output[i,0:numpars])
+        yhat=data['wave'][i,0:length]-yhat
+        s2=np.matmul(yhat.T,yhat)/(length-DesignT.shape[0])
+        output[i,numpars:2*numpars]=np.sqrt(s2*np.diag(np.linalg.inv(np.matmul(DesignT,DesignT.T))))
+        output[i,2*numpars]=np.sqrt(s2)
 
+        data['wave'][i,0:length]-=(output[i,0]*np.sin(omega*t)\
+                                  +output[i,1]*np.cos(omega*t)\
+                                  +output[i,2]*np.ones_like(t)).astype('int16')
 
 
 '''

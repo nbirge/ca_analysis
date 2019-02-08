@@ -57,7 +57,7 @@ def sim_spixel_cut(x):
     g=np.ones(len(x),dtype=bool)
     i=0
     while i<length-1:
-        if x['entry'][i]!=x['entry'][i+1]:
+        if x['entry'][i]!=x['entry'][i+1]:  # if next entry is different keep event
             i+=1
             continue
         elif x['detector'][i]!=x['detector'][i+1] or x['pixel'][i]!=x['pixel'][i+1] or not g[i]:
