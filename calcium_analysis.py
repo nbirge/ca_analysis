@@ -2,7 +2,7 @@
 import mpi4py
 from mpi4py import MPI
 import numpy as np
-import new_wave_ops as wo
+import wave_ops as wo
 import fileread as fr
 from scipy import signal
 import sys,os,time
