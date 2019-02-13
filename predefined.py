@@ -52,12 +52,13 @@ def pixcut(x,attr,board,channel):
 
 
 def sim_spixel_cut(x):
-    '''Returns x[g] where all events of x[g] are isolated to a single pixel'''
+    '''Returns x[g] where all events of x[g] are isolated to a single pixel. I.e. backscattering
+        between on a single pixel is allowed. Any other is'''
     length=len(x)
     g=np.ones(len(x),dtype=bool)
     i=0
     while i<length-1:
-        if x['entry'][i]!=x['entry'][i+1]:
+        if x['entry'][i]!=x['entry'][i+1]:  # if next entry is different keep event
             i+=1
             continue
         elif x['detector'][i]!=x['detector'][i+1] or x['pixel'][i]!=x['pixel'][i+1] or not g[i]:
@@ -88,6 +89,54 @@ def sim_comb_single_pixel(x):
         comb[i]['energy']=energy
         i=j
     return comb
+
+def board(pixel):
+    if int(pixel)<54:
+        return 0
+    elif int(pixel)<77:
+        return 1
+    else:
+        return 2
+
+def channel(pixel):
+    ch=int(pixel)
+    if ch==39 or ch==62 or ch==77:
+        return 1
+    elif ch==40 or ch==63 or ch==78:
+        return 2
+    elif ch==41 or ch==64 or ch==87:
+        return 3
+    elif ch==50 or ch==65 or ch==88:
+        return 4
+    elif ch==51 or ch==66 or ch==89:
+        return 5
+    elif ch==52 or ch==75:
+        return 6
+    elif ch==53 or ch==76:
+        return 7
+    else:
+        return 0
+
+def east_west(detector):
+    if detector=='W':
+        return 0
+    else:
+        return 3
+
+
+def sim_restructure(simdata):
+    vectorboard=np.vectorize(board,otypes=[int])
+    vectorchannel=np.vectorize(channel,otypes=[int])
+    vectordetector=np.vectorize(east_west,otypes=[int])
+    dtype=[('entry', '<i4'), ('board', '<i4'), ('channel', '<i4'), ('timestamp', '<f4'), ('energy', '<f4')]
+    output=np.zeros(len(simdata),dtype=dtype)
+    output['board']=vectorboard(simdata['pixel'])+vectordetector(simdata['detector'])
+    output['channel']=vectorchannel(simdata['pixel'])
+    output['entry']=simdata['entry']
+    output['timestamp']=simdata['timestamp']
+    output['energy']=simdata['energy']
+    return output
+
 
 
 #def combsets(runs):

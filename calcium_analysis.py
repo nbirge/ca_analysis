@@ -88,8 +88,10 @@ if findt0==1:
 
 if osc_removal==1:
     dtype.append(('osc_amps','4f'))
-    dtype.append(('osenergy','f'))
-    fformat[4]=4            # Equal to the number of sine/cosine functions currently using
+    dtype.append(('osc_errors','4f'))
+    dtype.append(('s2','f'))
+    dtype.append(('osc_energy','f'))
+    fformat[4]=10           # Equal to the number of sine/cosine functions currently using
 
 writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 if rank>0:
@@ -97,8 +99,9 @@ if rank>0:
     rise,top,fall=400,70,1100        #not going to use fall
     wo.pixel_traps(workarr=trap,rise=rise,top=top)
 #    b,a = signal.bessel(5,0.05,btype='low',analog=False)
-    maxamps,maxlocs,risetimes,osc_amps=np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece),\
-                                       np.zeros(piece+datachunk%piece),np.zeros((piece+datachunk%piece,4),dtype=float)
+    maxamps,maxlocs,risetimes=np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece),\
+np.zeros(piece+datachunk%piece)
+    fitpars=np.zeros((piece+datachunk%piece,9),dtype=float)
     traps=np.zeros((piece+datachunk%piece,length))
     if pileup == 1:
         liltrap=np.zeros((48,length))
@@ -146,14 +149,14 @@ if rank>0:
                 writebuffer[0:piece+rem]['energy']=maxamps[0:piece+rem].copy()
 
                 if osc_removal==1:
-                    wo.osc_removal(data,osc_amps)
-                    writebuffer[0:piece+rem]['osc_amps']=osc_amps[0:piece+rem]
+                    wo.osc_removal(data,fitpars)
+                    writebuffer[0:piece+rem]['osc_amps']=fitpars[0:piece+rem,0:4]
+                    writebuffer[0:piece+rem]['osc_errors']=fitpars[0:piece+rem,4:8]
+                    writebuffer[0:piece+rem]['s2']=fitpars[0:piece+rem,8]
                     wo.apply_trap(rise=rise,data=data,trap=trap,output=traps)
                     wo.trap_energy(traps[0:piece+rem],length=length,output=maxamps[0:piece+rem])    #need these maxamps for fitting later...
-                    writebuffer[0:piece+rem]['osenergy']=maxamps[0:piece+rem].copy()
-#                    wo.apply_trap(rise=rise,data=data,trap=trap,output=traps)
-#                    wo.trap_energy(traps[0:piece+rem],length=length,output=osenergy[0:piece+rem])    #need these maxamps for fitting later...
-#                    writebuffer[0:piece+rem]['osenergy']=osenergy[0:piece+rem]
+                    writebuffer[0:piece+rem]['osc_energy']=maxamps[0:piece+rem].copy()
+
 
                 if findt0==1:
                     wo.find_t0(traps=data['wave'],output=maxamps)
