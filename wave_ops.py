@@ -2,17 +2,26 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy import signal
 from scipy.special import factorial
+import pFilter
 
-#Average fall times for run 131c pixel by pixel
-#means=np.array([1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.2096, 1188.8999,\
-#                1000, 1263.1642, 1233.1743, 1056.3289, 1213.4717, 1112.0769, 1049.4534, 1219.0482,\
-#                1000, 1000, 1077.4932, 1157.1627, 1000, 1163.2235, 1000, 1000,\
-#                1000, 1027.103, 1111.1212, 1033.5468, 1109.469, 1022.693, 1929.7336, 1000,\
-#                1000, 1124.478, 1073.1306, 1040.2197, 1100.4457, 1045.0566, 1135.8975, 1073.1854,\
-#                1000, 1000, 1087.187, 1133.1069, 1005.3494, 1000, 1000, 1000])
+#Average fall times for run 131 pixel by pixel
+means=np.array([1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.2096, 1188.8999,\
+                1000, 1263.1642, 1233.1743, 1056.3289, 1213.4717, 1112.0769, 1049.4534, 1219.0482,\
+                1000, 1000, 1077.4932, 1157.1627, 1000, 1163.2235, 1000, 1000,\
+                1000, 1027.103, 1111.1212, 1033.5468, 1109.469, 1022.693, 1929.7336, 1000,\
+                1000, 1124.478, 1073.1306, 1040.2197, 1100.4457, 1045.0566, 1135.8975, 1073.1854,\
+                1000, 1000, 1087.187, 1133.1069, 1005.3494, 1000, 1000, 1000])
 
 #means=np.load('./pulser_means.npy')[:,1]
-means=np.ones(48,dtype='float')*1250
+#means=np.ones(48,dtype='float')*1250
+
+def backscatter(data,output):
+    length=len(data)
+    bd,ch=0,0
+    for i in range(length):
+        bdch=data['board'][i]*8+data['channel'][i]
+        output[i,0:3]=pFilter.execute(data['wave'][i],means[bdch])
+
 
 def wave(t,*pars):
     t0,tau1,tau2=pars
@@ -157,11 +166,10 @@ def fitted_trap(data,rise,top,fall,output):
 
 def find_t0(traps,output):
     length = len(traps[0])
-    rise,top,fall=100.,70.,1050.
     tr=np.arange(length)
-    trap(tr,rise=100.,fall=1050.,top=70)
-    trps= np.apply_along_axis(lambda m: signal.fftconvolve(m, tr, mode='full')[0:length]/(rise*fall), axis=1, arr=traps)
-    output[0:len(traps)]=np.argmax(trps,axis=1)
+    trap(tr,rise=100.,fall=1050.,top=1)
+    trps= np.apply_along_axis(lambda m: signal.fftconvolve(m, tr, mode='full')[0:length]/(100*1050), axis=1, arr=traps)
+    output[0:len(traps)]=np.argmax(trps,axis=1)-100
 
 
 
