@@ -90,6 +90,32 @@ def sim_comb_single_pixel(x):
         i=j
     return comb
 
+def sim_thresh(x,thresh):
+    length=len(x)
+    trutharray=ones(length,dtype=bool)
+    thresh=15.
+    i=0
+    while i < length-2:
+        j=i+1
+        backscattering=x['entry'][i]==x['entry'][j]
+        energy=x['energy'][i]
+        while backscattering and j<length-2:
+            if x['detector'][j]== x['detector'][i] and x['pixel'][j]== x['pixel'][i]:
+                energy+=x['energy'][j]
+            j+=1
+            backscattering=x['entry'][i]==x['entry'][j]
+        if energy < thresh:
+            trutharray[i]=False
+            j=i+1
+            backscattering=x['entry'][i]==x['entry'][j]
+            while backscattering and j <length-2:
+                if x['energy'][j]< thresh:
+                    trutharray[j]=False
+                j+=1
+                backscattering=x['entry'][i]==x['entry'][j]
+        i=j
+    return trutharray
+
 def board(pixel):
     if int(pixel)<54:
         return 0

@@ -107,7 +107,7 @@ def trap_energy(traps,length,output):
     t1=np.logical_and(traps[0:numwaves,0:length-1]-0.8*maxamps<0,traps[0:numwaves,1:length]-0.8*maxamps>0)    #Here should be a flag to tag multiple crappy t1's
     t2=np.logical_and(traps[0:numwaves,0:length-1]-0.8*maxamps>0,traps[0:numwaves,1:length]-0.8*maxamps<0)
     #Here could be that check (not sure how to do it without a for loop...
-    #Fix shit this
+    #
     for i in range(numwaves):
         if np.sum(t1[i])>=1 and np.sum(t2[i])>=1:
             output[i]=traps[i][int((t[0:length-1][t2[i]][0]-t[0:length-1][t1[i]][0])/2)+t[0:length-1][t1[i]][0]]
