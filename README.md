@@ -9,7 +9,7 @@ sample data available here: https://drive.google.com/file/d/1mmF6zKcPnwSyYhD-OYl
 
 Full data is located on the ACF
 /lustre/haven/gamma/neutrons/ca45_data
-Python version is 2\*
+Python version is 3.6.7\*
 
 Scripts:
 wave_display.py:
