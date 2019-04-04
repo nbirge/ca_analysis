@@ -5,8 +5,8 @@ import sys,os
 def land(x,y):
     return np.logical_and(x,y)
 
-#path,run = str(sys.argv[1]),str(sys.argv[2])
-path='./'
+path,run = str(sys.argv[1]),str(sys.argv[2])
+#path='./'
 beg= int(sys.argv[1])
 if len(sys.argv[:])>2:
     end = int(sys.argv[2])+1

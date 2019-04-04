@@ -41,9 +41,43 @@ def precuts(x):
     t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
     trutharray=land(t2-t1>250,t1-t0>250)
     x=x[1:-1][trutharray]
-    x=x[lor(x['pileup']<2,x['pilediff']<60)]
+    x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<60)]
     x=x[x['t0']>100]
     return x
+
+def doubles(data,etype='energy'):
+    timewindow=3500
+    Ediff=1
+    length=len(data)
+    trutharray=np.ones(length,dtype=bool)
+    multi=0
+    i=0
+    bdch=0
+    while i < length:
+        bdch=data['board'][i]*8+data['channel'][i]
+        multi=len(data[i:i+100][land(data[i:i+100]['board']*8+data[i:i+100]['channel'] == bdch,\
+                                        land(np.abs(data[i:i+100][etype]-data[i][etype])<Ediff,\
+                np.abs(data[i:i+100]['timestamp']-data[i:i+100]['timestamp']<timewindow)))])
+        if multi>1 :
+            trutharray[i]=False
+        i+=1
+    return trutharray
+
+def good_timestamps(data,time_cut=2*3600/4e-9):
+    trutharray=data['timestamp']<time_cut
+    return trutharray
+
+def only_cal_pixels(data):
+    trutharray=np.zeros(len(data))
+    for i in [11,12,35]:
+        bd,ch=int(i/8),int(i%8)
+        trutharray=lor(trutharray,\
+                    land(data['board']==bd,data['channel']==ch))
+    return trutharray
+
+
+def standard_cuts(x,etype):
+    return 0
 
 def pixcut(x,attr,board,channel):
     '''Returns x['attr'][logical_and(x[board]==board,x[channel]==channel)
@@ -74,17 +108,17 @@ def sim_comb_single_pixel(x):
     '''Returns an array where all energies corresponding to the the same event number are summed.
             This expects that x has already been reduced to single pixel data.'''
     comb=np.zeros_like(x)
-    comb['energy']+=-5000
+    comb['energy']+=-10
     i=0
-    while i < len(x)-2:
+    j=0
+    while i < len(x)-1 and j<len(x)-1:
         j=i+1
         backscattering=x[i]['entry']==x[j]['entry']
         energy= x['energy'][i]
-        while backscattering:
+        while backscattering and j<len(x)-1:
             energy+=x['energy'][j]
             j+=1
-            if j<len(x)-2:
-                backscattering=x[i]['entry']==x[j]['entry']
+            backscattering=x[i]['entry']==x[j]['entry']
         comb[i]=x[i]
         comb[i]['energy']=energy
         i=j
