@@ -21,7 +21,7 @@ if outpath[-1] != '/':
 fname='Run_'+str(run)+'_'+str(part)+'.bin'
 fsize = os.stat(inpath+fname).st_size
 
-fitting,pileup,trapNfit,findt0,osc_removal = 0,0,0,0,0
+fitting,pileup,trapNfit,findt0,osc_removal,backscatter = 0,0,0,0,0,0
 for i in range(len(sys.argv[:])):
     if sys.argv[i] == '-f':
         fitting=1
@@ -35,6 +35,8 @@ for i in range(len(sys.argv[:])):
         findt0=1
     if sys.argv[i] == '-osc_removal':
         osc_removal=1
+    if sys.argv[i] == '-backscatter':
+        backscatter=1
 
 length = -1.
 if rank == 0:
@@ -74,9 +76,13 @@ if fitting ==1:
     fformat[0]=1
 
 if pileup ==1:
+    liltrap=np.zeros((48,length))
+    fast_rise,fast_top=10,4
+    wo.pixel_traps(workarr=liltrap,rise=fast_rise,top=fast_top)
     for i in [('pileup','i'),('pilediff','i'),('pileamp','f')]:
         dtype.append(i)
     fformat[1]=pile_thresh
+
 
 if trapNfit == 1:
     dtype.append(('fitenergy','f'))
@@ -87,11 +93,19 @@ if findt0==1:
     fformat[3]=1
 
 if osc_removal==1:
+    fitpars=np.zeros((piece+datachunk%piece,9),dtype=float)
     dtype.append(('osc_amps','4f'))
     dtype.append(('osc_errors','4f'))
     dtype.append(('s2','f'))
     dtype.append(('osc_energy','f'))
     fformat[4]=10           # Equal to the number of sine/cosine functions currently using
+
+if backscatter ==1:
+    filters=np.zeros((piece+datachunk%piece,3),dtype=int)
+    for i in [('pfilter0','i'),('pfilter1','i'),('pfilter2','i')]:
+        dtype.append(i)
+    fformat[5]=1
+
 
 writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 if rank>0:
@@ -101,12 +115,8 @@ if rank>0:
 #    b,a = signal.bessel(5,0.05,btype='low',analog=False)
     maxamps,maxlocs,risetimes=np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece),\
 np.zeros(piece+datachunk%piece)
-    fitpars=np.zeros((piece+datachunk%piece,9),dtype=float)
     traps=np.zeros((piece+datachunk%piece,length))
-    if pileup == 1:
-        liltrap=np.zeros((48,length))
-        fast_rise,fast_top=10,4
-        wo.pixel_traps(workarr=liltrap,rise=fast_rise,top=fast_top)
+
 
     with open(outpath+fname[:-4]+'-'+str(rank)+'.part','w') as f:
         for i in range(int(datachunk/piece)):
@@ -157,6 +167,11 @@ np.zeros(piece+datachunk%piece)
                     wo.trap_energy(traps[0:piece+rem],length=length,output=maxamps[0:piece+rem])    #need these maxamps for fitting later...
                     writebuffer[0:piece+rem]['osc_energy']=maxamps[0:piece+rem].copy()
 
+                if backscatter ==1:
+                    wo.backscatter(data=data,output=filters)
+                    writebuffer[0:piece+rem]['pfilter0']=filters[0:piece+rem,0]
+                    writebuffer[0:piece+rem]['pfilter1']=filters[0:piece+rem,1]
+                    writebuffer[0:piece+rem]['pfilter2']=filters[0:piece+rem,2]
 
                 if findt0==1:
                     wo.find_t0(traps=data['wave'],output=maxamps)

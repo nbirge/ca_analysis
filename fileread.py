@@ -64,6 +64,10 @@ def gen_output(fname):
             data_byte_size+=int(4*formats[4])
             formatting+=',4f,4f,f,f'
             names+=',osc_amps,osc_errors,s2,osc_energy'
+        if formats[5] >0:
+            data_byte_size+=int(3*4)
+            formatting+=',i,i,i'
+            names+=',pfilter0,pfilter1,pfilter2'
         numwaves=int((os.stat(fname).st_size-(8+4*10))/data_byte_size)
         f.seek(8+4*10)
         data=np.core.records.fromfile(f,formats=formatting,shape=numwaves,names=names,byteorder='<')

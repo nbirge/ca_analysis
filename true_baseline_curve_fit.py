@@ -83,7 +83,7 @@ for r in runs:
                     #p,v=curve_fit(background,t,data['wave'][i],p0=[maxout,maxout,0,omega],bounds=([-100,-100,-300,8E-4],[100,100,300,8E-3]))       #UNCOMMENT THIS TO DO A REGULAR FIT (NOT ESPECIALLY BOUNDED)
                     p,v=curve_fit(background,t,data['wave'][i],p0=[maxout,maxout,0,omega],bounds=([-100,-100,-300,lowerbound],[100,100,300,upperbound]))
                     chisq=np.sum(np.power(background(t,*p)-data['wave'][i],2.))/(length-p.shape[0])
-                    pars.append(np.concatenate((p,np.sqrt(np.diag(v)),[bd,ch,i])));
+                    pars.append(np.concatenate((p,np.sqrt(np.diag(v)),[chisq,bd,ch,i])));
 
             except RuntimeError:
                 continue
