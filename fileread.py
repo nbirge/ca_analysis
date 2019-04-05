@@ -72,7 +72,46 @@ def gen_output(fname):
         f.seek(8+4*10)
         data=np.core.records.fromfile(f,formats=formatting,shape=numwaves,names=names,byteorder='<')
         return data,file_timestamp,formats
-            
+
+
+def simulation(fname):
+    dtype={'names':('entry','detector','pixel','timestamp','energy'),'formats':('i4','U1','i4','f4','f4')}
+    data= np.genfromtxt(fname,dtype=dtype,delimiter=' ')
+    data['energy']=data['energy']/1.e3
+    return data
+
+def trig(fname):
+    with open(fname,'rb') as f:
+        formatting='i4,i1,i8,i2'
+        names='board,channel,timestamp,energy'
+        timestamp=np.fromfile(f,dtype='Q',count=1)[0]
+        data_byte_size=4+1+8+2
+        numwaves=int((os.stat(fname).st_size-8)/data_byte_size)
+        f.seek(8)
+        data=np.core.records.fromfile(f,formats=formatting,shape=numwaves,names=names,byteorder='<')
+    return data,timestamp
+
+'''def file_consolidation(path,runnumber)
+    x=filter(lambda x: x.startswith('Run_'+str(runnumber)) and x.endswith('-comb.bin') and x!='Run_'+str(runnumber)+'_0-comb.bin',os.listdir(path))
+    name='Run_'+str(runnumber)
+    data=[]
+    formatting = 'B,i,i,i,Q,Q,i,f'
+    names='result,evID,board,channel,timestamp,requesttime,risetime,energy'
+    file_timestamp=np.fromfile(path+name,dtype='Q',count=1)[0]
+    f.seek(8)
+    formats = np.fromfile(f,dtype='10B',count=1)[0]
+    data_byte_size=(1+3*4+2*8+4+4)
+    if formats[0]==1:            #For sets with fall times calculated
+        data_byte_size+=4
+        formatting+=',f'
+        names+=',falltime'
+    if formats[1] == 1:            #For data sets where pileup is determined
+        data_byte_size+=4
+        formatting+=',i'
+        names+=',pileup'
+    numwaves=(os.stat(path+name).st_size-(8+1*10))/data_byte_size
+    f.seek(8+1*10)
+    data=np.core.records.fromfile(f,formats=formatting,shape=numwaves,names=names,byteorder='<')
 
 def temp_gen_output(fname):
     with open(fname,'rb') as f:
@@ -103,37 +142,6 @@ def temp_gen_output(fname):
         f.seek(8+4*10)
         data=np.core.records.fromfile(f,formats=formatting,shape=numwaves,names=names,byteorder='<')
         return data,file_timestamp,formats
-
-
-def simulation(fname):
-    dtype={'names':('entry','detector','pixel','timestamp','energy'),'formats':('i4','U1','i4','f4','f4')}
-    data= np.genfromtxt(fname,dtype=dtype,delimiter=' ')
-    data['energy']=data['energy']/1.e3
-    return data
-
-'''def file_consolidation(path,runnumber)
-    x=filter(lambda x: x.startswith('Run_'+str(runnumber)) and x.endswith('-comb.bin') and x!='Run_'+str(runnumber)+'_0-comb.bin',os.listdir(path))
-    name='Run_'+str(runnumber)
-    data=[]
-    formatting = 'B,i,i,i,Q,Q,i,f'
-    names='result,evID,board,channel,timestamp,requesttime,risetime,energy'
-    file_timestamp=np.fromfile(path+name,dtype='Q',count=1)[0]
-    f.seek(8)
-    formats = np.fromfile(f,dtype='10B',count=1)[0]
-    data_byte_size=(1+3*4+2*8+4+4)
-    if formats[0]==1:            #For sets with fall times calculated
-        data_byte_size+=4
-        formatting+=',f'
-        names+=',falltime'
-    if formats[1] == 1:            #For data sets where pileup is determined
-        data_byte_size+=4
-        formatting+=',i'
-        names+=',pileup'
-    numwaves=(os.stat(path+name).st_size-(8+1*10))/data_byte_size
-    f.seek(8+1*10)
-    data=np.core.records.fromfile(f,formats=formatting,shape=numwaves,names=names,byteorder='<')
-
-
 '''
 
 
