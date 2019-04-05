@@ -16,10 +16,10 @@ for run in range(80,154):
     try:
         if run in source_list:
             continue
-        loc='/lustre/haven/gamma/neutrons/ca45_data/2017/disk0'
+        loc='/lustre/haven/gamma/neutrons/ca45_data/2017/disk0/'
         if run>63:
-            loc='/lustre/haven/gamma/neutrons/ca45_data/2017/disk1'
-        data=fr.trig('Run_'+str(run)+'.trig')[0]
+            loc='/lustre/haven/gamma/neutrons/ca45_data/2017/disk1/'
+        data=fr.trig(loc+'Run_'+str(run)+'.trig')[0]
         data=data[data['energy']>6000]
         i=0
         for pixel in [11,12,35]:
