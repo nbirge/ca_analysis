@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.constants import *
 #import load
 
 def land(x,y):
@@ -197,6 +198,21 @@ def sim_restructure(simdata):
     output['energy']=simdata['energy']
     return output
 
+def Fierz_fit(histogram,bins,beg,end,normbin):
+    ''' histogram is generally a ratio of data to simulation w/b=0 (should be a normalized ratio),
+        bins are the energybins for histogram, beg and end are the beginning 
+        and ending to the fit range, and normbin is the bin of energybins to 
+        which you're normalizing'''
+    trutharray=pd.land(bins>beg,bins<end)
+    fitbins=bins[trutharray]
+    normE=bins[normbin]
+    normarray=fitbins==bins[normbin]
+    fithist=histogram[trutharray]
+    m_e_kev=m_e*c**2./(kilo*eV)
+    shape=lambda x,b: (1+b*m_e_kev/(m_e_kev+x))/(1+b*m_e_kev/(m_e_kev+normE))
+    pars,vrs=curve_fit(shape,fitbins,fithist,p0=-0.01,epsfcn=0.00001)
+    vrs=np.sqrt(np.diag(vrs))
+    return pars[0],vrs[0]
 
 
 #def combsets(runs):
