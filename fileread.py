@@ -75,7 +75,13 @@ def gen_output(fname):
 
 
 def simulation(fname):
-    dtype={'names':('entry','detector','pixel','timestamp','energy'),'formats':('i4','U1','i4','f4','f4')}
+    dtype={'names':('entry','detector','pixel','timestamp','energy'),'formats':('i4','U1','i4','f8','f8')}
+    data= np.genfromtxt(fname,dtype=dtype,delimiter=' ')
+    data['energy']=data['energy']/1.e3
+    return data
+
+def initial_simulation(fname):
+    dtype={'names':('entry','particle','t0','energy','x','y','z','vx','vy','vz'),'formats':('i4','i4','f8','f8','f8','f8','f8','f8','f8','f8')}
     data= np.genfromtxt(fname,dtype=dtype,delimiter=' ')
     data['energy']=data['energy']/1.e3
     return data
