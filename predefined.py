@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.constants import *
+from scipy.optimize import curve_fit
 #import load
 
 def land(x,y):
@@ -203,7 +204,7 @@ def Fierz_fit(histogram,bins,beg,end,normbin):
         bins are the energybins for histogram, beg and end are the beginning 
         and ending to the fit range, and normbin is the bin of energybins to 
         which you're normalizing'''
-    trutharray=pd.land(bins>beg,bins<end)
+    trutharray=land(bins>beg,bins<end)
     fitbins=bins[trutharray]
     normE=bins[normbin]
     normarray=fitbins==bins[normbin]
