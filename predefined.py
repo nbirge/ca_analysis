@@ -37,7 +37,17 @@ def sim_single_pixel(x,board,channel):
     pix= pixel(board,channel)
     return x[land(x['detector']==pix[-1],x['pixel']==int(pix[:-1]))]
 
-def precuts(x):
+def precuts(x,twindow=60):
+    x=x[x['energy']>100]
+    x.sort(order='timestamp')
+    t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
+    trutharray=land(t2-t1>250,t1-t0>250)
+    x=x[1:-1][trutharray]
+    x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<twindow)]
+    x=x[x['t0']>100]
+    return x
+
+def precuts_multipixel_twindow(x,twindow):
     x=x[x['energy']>100]
     x.sort(order='timestamp')
     t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
@@ -214,6 +224,24 @@ def Fierz_fit(histogram,bins,beg,end,normbin):
     pars,vrs=curve_fit(shape,fitbins,fithist,p0=-0.01,epsfcn=0.00001)
     vrs=np.sqrt(np.diag(vrs))
     return pars[0],vrs[0]
+
+def Fierz_arb_norm(X,a,b):
+    '''X=tuple of simulation, bins & trutharray'''
+    sim,bins,trutharray = X
+    trutharray=trutharray.astype(bool)
+    fitsim=sim[trutharray]
+    fitbins=bins[trutharray]
+    return a*fitsim*(1+b*m_e*c**2./(m_e*c**2.+fitbins*kilo*eV))
+
+def Fierz_arb_norm_fit(simulation,data,bins,beg=100,end=200):
+    '''X=tuple of simulation, bins & trutharray'''
+    trutharray=land(bins>beg,bins<end)
+    guess=[simulation[100]/data[100],0]
+    bounds=[(0,-10),(np.inf,10)]
+    pars,vrs=curve_fit(Fierz_arb_norm,(simulation,bins,trutharray),data[trutharray],\
+          p0=guess,bounds=bounds)
+    vrs=np.sqrt(np.diag(vrs))
+    return pars,vrs
 
 
 #def combsets(runs):
