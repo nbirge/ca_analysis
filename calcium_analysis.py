@@ -21,7 +21,7 @@ if outpath[-1] != '/':
 fname='Run_'+str(run)+'_'+str(part)+'.bin'
 fsize = os.stat(inpath+fname).st_size
 
-fitting,pileup,trapNfit,findt0,osc_removal,backscatter = 0,0,0,0,0,0
+fitting,pileup,trapNfit,findt0,osc_removal,backscatter,simulation = 0,0,0,0,0,0,0
 for i in range(len(sys.argv[:])):
     if sys.argv[i] == '-f':
         fitting=1
@@ -37,6 +37,8 @@ for i in range(len(sys.argv[:])):
         osc_removal=1
     if sys.argv[i] == '-backscatter':
         backscatter=1
+    if sys.argv[i] == '-simulation':
+        simulation=1
 
 length = -1.
 if rank == 0:
@@ -131,7 +133,10 @@ np.zeros(piece+datachunk%piece)
                 numwaves = piece+rem
                 data = fr.raw(path=inpath+fname,length=length,numwaves=piece+rem,row=int(row+i*piece))
                 writebuffer[0:piece+rem]['result'], writebuffer[0:piece+rem]['evID'], writebuffer[0:piece+rem]['board'], writebuffer[0:piece+rem]['channel'], writebuffer[0:piece+rem]['timestamp'], writebuffer[0:piece+rem]['requesttime'] = data['result'], data['evID'], data['board'], data['channel'], data['timestamp'], data['requesttime']
-                wo.baseline_restore(data,600)        #restores baseline and performs necessary preformatting of the data (data & 16383...)
+                if simulation == 1:
+                    wo.sim_baseline_restore(data,600)
+                else:
+                    wo.baseline_restore(data,600)        #restores baseline and performs necessary preformatting of the data (data & 16383...)
                 wo.pretrigger_rms(wave=data['wave'],workarr=maxamps[0:piece+rem],pretrig_timebin=600)
                 writebuffer[0:piece+rem]['pretrigrms']=maxamps[0:piece+rem].copy()
 #                smooth_wave= signal.filtfilt(b,a,data['wave'])
