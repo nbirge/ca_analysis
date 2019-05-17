@@ -236,14 +236,15 @@ def Fierz_arb_norm(X,a,b):
     return a*redHisto*(1+b*m_e*c**2./(m_e*c**2.+redBins*kilo*eV))
 
 def Fierz_arb_norm_fit(simulation,data,bins,beg=100,end=200,sigma=1):
-    '''X=tuple of simulation, bins & trutharray'''
+    '''Fits simulation to data. I.e. Data= Fierz_arb_norm((simulation,bins,truth),a,b) | 
+        To plot the fit, Simulation is scaled by fit pars to data '''
     trutharray=land(bins>beg,bins<end)
-    guess=[simulation[100]/data[100],0]
+    guess=[simulation[trutharray][0]/data[trutharray][0],0]
     bounds=[(0,-10),(np.inf,10)]
     X=(simulation,bins,trutharray)
     if isinstance(sigma,int):
         sigma=np.ones(np.sum(len(bins)),dtype=float)
-    pars,vrs=curve_fit(Fierz_arb_norm,X,data[trutharray],sigma=sigma[trutharray],p0=guess,bounds=bounds)
+    pars,vrs=curve_fit(Fierz_arb_norm,X,data[trutharray],sigma=sigma[trutharray],p0=guess)#,bounds=bounds)
     vrs=np.sqrt(np.diag(vrs))
     return pars,vrs
 
