@@ -57,6 +57,11 @@ def baseline_restore(wave,pretrigger):
     wave['wave'][wave['wave']>8192]-=16384
     wave['wave']=np.subtract(wave['wave'][0:numwaves],np.mean(wave['wave'][0:numwaves,0:pretrigger],axis=1).reshape((numwaves,1)))
 
+def sim_baseline_restore(wave,pretrigger):
+    '''Bitwise & operation and range restore (-=16384) with a baseline restoration \n Use: >> baseline_restore(wavetorestorebaseline,pretrig) '''
+    numwaves = len(wave['wave'])
+    wave['wave']=np.subtract(wave['wave'][0:numwaves],np.mean(wave['wave'][0:numwaves,0:pretrigger],axis=1).reshape((numwaves,1)))
+
 def pretrigger_rms(wave,workarr,pretrig_timebin):
     workarr[0:len(wave)]=1./np.sqrt(float(pretrig_timebin))*np.sqrt(np.sum(np.power(wave[0:len(wave),0:pretrig_timebin],2.),axis=1))
 

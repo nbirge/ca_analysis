@@ -209,16 +209,18 @@ def sim_restructure(simdata):
     output['energy']=simdata['energy']
     return output
 
-def Fierz_fit(histogram,bins,beg,end,normbin):
+def Fierz_fit(histogram,bins,beg,end,normbin,sigma=1):
     ''' histogram is generally a ratio of data to simulation w/b=0 (should be a normalized ratio),
         bins are the energybins for histogram, beg and end are the beginning 
         and ending to the fit range, and normbin is the bin of energybins to 
         which you're normalizing'''
     trutharray=land(bins>beg,bins<end)
-    fitbins=bins[trutharray]
+    fitbins=bins[trutharray].astype(float)
     normE=bins[normbin]
     normarray=fitbins==bins[normbin]
-    fithist=histogram[trutharray]
+    fithist=histogram[trutharray].astype(float)
+    if isinstance(sigma,int):
+        sigma=np.ones(len(fithist),dtype=float)
     m_e_kev=m_e*c**2./(kilo*eV)
     shape=lambda x,b: (1+b*m_e_kev/(m_e_kev+x))/(1+b*m_e_kev/(m_e_kev+normE))
     pars,vrs=curve_fit(shape,fitbins,fithist,p0=-0.01,epsfcn=0.00001)
@@ -227,19 +229,22 @@ def Fierz_fit(histogram,bins,beg,end,normbin):
 
 def Fierz_arb_norm(X,a,b):
     '''X=tuple of simulation, bins & trutharray'''
-    sim,bins,trutharray = X
+    histo,bins,trutharray = X
     trutharray=trutharray.astype(bool)
-    fitsim=sim[trutharray]
-    fitbins=bins[trutharray]
-    return a*fitsim*(1+b*m_e*c**2./(m_e*c**2.+fitbins*kilo*eV))
+    redHisto=histo[trutharray].astype(float)
+    redBins=bins[trutharray].astype(float)
+    return a*redHisto*(1+b*m_e*c**2./(m_e*c**2.+redBins*kilo*eV))
 
-def Fierz_arb_norm_fit(simulation,data,bins,beg=100,end=200):
-    '''X=tuple of simulation, bins & trutharray'''
+def Fierz_arb_norm_fit(simulation,data,bins,beg=100,end=200,sigma=1):
+    '''Fits simulation to data. I.e. Data= Fierz_arb_norm((simulation,bins,truth),a,b) | 
+        To plot the fit, Simulation is scaled by fit pars to data '''
     trutharray=land(bins>beg,bins<end)
-    guess=[simulation[100]/data[100],0]
+    guess=[simulation[trutharray][0]/data[trutharray][0],0]
     bounds=[(0,-10),(np.inf,10)]
-    pars,vrs=curve_fit(Fierz_arb_norm,(simulation,bins,trutharray),data[trutharray],\
-          p0=guess,bounds=bounds)
+    X=(simulation,bins,trutharray)
+    if isinstance(sigma,int):
+        sigma=np.ones(np.sum(len(bins)),dtype=float)
+    pars,vrs=curve_fit(Fierz_arb_norm,X,data[trutharray],sigma=sigma[trutharray],p0=guess)#,bounds=bounds)
     vrs=np.sqrt(np.diag(vrs))
     return pars,vrs
 
