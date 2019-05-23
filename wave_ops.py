@@ -216,7 +216,8 @@ def osc_removal(data,output):
     '''Data should have baseline restored. NOTE: This removes oscillation AND returns amplitudes '''
     rise=20
     length=len(data['wave'][0])
-    omega=2*np.pi/(length)
+    period=4032 #IN UNITS OF TIMEBINS (I.E. 62 KHZ --> T=1/(62000*4E-9) = 4032
+    omega=2*np.pi/(period)
     t=np.arange(length)
     DesignT=np.array([np.sin(omega*t),\
                       np.cos(omega*t),\
