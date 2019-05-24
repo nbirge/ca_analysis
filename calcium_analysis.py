@@ -112,7 +112,7 @@ if backscatter ==1:
 writebuffer=np.zeros(piece+datachunk%piece,dtype=dtype)
 if rank>0:
     trap = np.zeros((48,length))
-    rise,top,fall=400,70,1100        #not going to use fall
+    rise,top,fall=300,100,1100        #not going to use fall
     wo.pixel_traps(workarr=trap,rise=rise,top=top)
 #    b,a = signal.bessel(5,0.05,btype='low',analog=False)
     maxamps,maxlocs,risetimes=np.zeros(piece+datachunk%piece),np.zeros(piece+datachunk%piece),\
