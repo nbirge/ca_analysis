@@ -221,9 +221,10 @@ def Fierz_fit(histogram,bins,beg,end,normbin,sigma=1):
     fithist=histogram[trutharray].astype(float)
     if isinstance(sigma,int):
         sigma=np.ones(len(fithist),dtype=float)
+    sigma=sigma[trutharray]
     m_e_kev=m_e*c**2./(kilo*eV)
     shape=lambda x,b: (1+b*m_e_kev/(m_e_kev+x))/(1+b*m_e_kev/(m_e_kev+normE))
-    pars,vrs=curve_fit(shape,fitbins,fithist,p0=-0.01,epsfcn=0.00001)
+    pars,vrs=curve_fit(shape,fitbins,fithist,p0=-0.01,epsfcn=0.00001,sigma=sigma)
     vrs=np.sqrt(np.diag(vrs))
     return pars[0],vrs[0]
 
