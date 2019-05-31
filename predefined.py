@@ -39,7 +39,7 @@ def detector_board(detector):
     if detector == 'W':
         return 0
     else:
-        return 1
+        return 3
 v_detector_board=np.vectorize(detector_board)
 
 def vec_pixel_map(sim):
@@ -81,6 +81,10 @@ def pixel(board,channel):
     bdch = board*8+channel
     return names[bdch]
 
+def pixel_bdch(bdch): 
+    names=['Psr','39W','40W','41W','50W','51W','52W','53W','Psr','62W','63W','64W','65W','66W','75W','76W','Psr','77W','78W','87W','88W','89W','N/A','N/A','Psr','39E','40E','41E','50E','51E','52E','53E','Psr','62E','63E','64E','65E','66E','75E','76E','Psr','77E','78E','87E','88E','89E','N/A','N/A']
+    return names[bdch]
+
 def sim_single_pixel(x,board,channel):
     pix= pixel(board,channel)
     return x[land(x['detector']==pix[-1],x['pixel']==int(pix[:-1]))]
@@ -94,16 +98,6 @@ def precuts(x,twindow=250,pilewindow=100,energy=100):
     trutharray=land(t2-t1>twindow,t1-t0>twindow)
     x=x[1:-1][trutharray]
     x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<pilewindow)]
-    x=x[x['t0']>100]
-    return x
-
-def precuts_multipixel_twindow(x,twindow):
-    x=x[x['energy']>100]
-    x.sort(order='timestamp')
-    t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
-    trutharray=land(t2-t1>250,t1-t0>250)
-    x=x[1:-1][trutharray]
-    x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<60)]
     x=x[x['t0']>100]
     return x
 
@@ -124,6 +118,17 @@ def doubles(data,etype='energy'):
             trutharray[i]=False
         i+=1
     return trutharray
+
+def precuts_multipixel_twindow(x,twindow):
+    x=x[x['energy']>100]
+    x.sort(order='timestamp')
+    x=x[doubles(x)]
+    t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
+    trutharray=land(t2-t1>250,t1-t0>250)
+    x=x[1:-1][trutharray]
+    x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<60)]
+    x=x[x['t0']>100]
+    return x
 
 def good_timestamps(data,time_cut=2*3600/4e-9):
     trutharray=data['timestamp']<time_cut

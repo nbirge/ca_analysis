@@ -134,11 +134,11 @@ def pileup(data,thresh,amplitudes,tdiff,numpeaks):
             except ValueError:
                 mainpkloc=np.max(peaklocs)
             amplitudes[i]=np.argmax(data[i][peaklocs[peaklocs!=mainpkloc]])
-            tdiff[i]=mainpkloc-peaklocs[peaklocs!=mainpkloc][int(amplitudes[i])]
+            tdiff[i]=peaklocs[peaklocs!=mainpkloc][int(amplitudes[i])]-mainpkloc
             amplitudes[i]=data[i][peaklocs[peaklocs!=mainpkloc]][int(amplitudes[i])]
         elif numpeaks[i] == 1:
             amplitudes[i]=data[i][peaklocs[0]]
-            tdiff[i]=peaklocs[0]
+            tdiff[i]=peaklocs[0]-10000
         else:
             amplitudes[i]=-10000
             tdiff[i]=-10000
