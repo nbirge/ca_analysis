@@ -3,6 +3,71 @@ from scipy.constants import *
 from scipy.optimize import curve_fit
 #import load
 
+pix_map={ 
+39:(0,1),
+40:(0,2),
+41:(0,3),
+50:(0,4),
+51:(0,5),
+52:(0,6),
+53:(0,7),
+
+62:(1,1),
+63:(1,2),
+64:(1,3),
+65:(1,4),
+66:(1,5),
+75:(1,6),
+76:(1,7),
+
+77:(2,1),
+78:(2,2),
+87:(2,3),
+88:(2,4),
+89:(2,5),
+
+}
+#---------------------------------------------------------------------------------------
+#               Taking simulation 'PixelDetector' --> Board,Channel
+#---------------------------------------------------------------------------------------
+def pixel_map(pixel):
+    return pix_map[pixel]
+
+v_pixel_map=np.vectorize(pixel_map)
+
+def detector_board(detector):
+    if detector == 'W':
+        return 0
+    else:
+        return 3
+v_detector_board=np.vectorize(detector_board)
+
+def vec_pixel_map(sim):
+    return v_pixel_map(sim)
+
+def pixel_to_bdch(sim):
+    bdch=v_pixel_map(sim['pixel'])
+    bdch=np.array(bdch,dtype=int)
+    bdch[0]+=v_detector_board(sim['detector'])
+    return bdch
+#---------------------------------------------------------------------------------------
+calibration=np.load('/home/noah/Desktop/large_analysis/ca_analysis/simulation_comparison/calibration.npy')
+calibration=calibration.view(np.recarray)
+def calibrate(energy_type,board,channel): 
+    bdch=int(board*8+channel) 
+    if bdch ==6: 
+        m,b=1/calibration.slope[3],calibration.offset[3]
+    elif bdch==11: 
+        m,b=1/calibration.slope[0],calibration.offset[0]
+    elif bdch==12: 
+        m,b=1/calibration.slope[1],calibration.offset[1]
+    elif bdch==35: 
+        m,b=1/calibration.slope[2],calibration.offset[2]
+    else: 
+        m,b=0,0   
+    return (energy_type-b)*m
+vec_calibrate=np.vectorize(calibrate)
+
 def land(x,y):
     return np.logical_and(x,y)
 
@@ -33,27 +98,25 @@ def pixel(board,channel):
     bdch = board*8+channel
     return names[bdch]
 
+def pixel_bdch(bdch): 
+    names=['Psr','39W','40W','41W','50W','51W','52W','53W','Psr','62W','63W','64W','65W','66W','75W','76W','Psr','77W','78W','87W','88W','89W','N/A','N/A','Psr','39E','40E','41E','50E','51E','52E','53E','Psr','62E','63E','64E','65E','66E','75E','76E','Psr','77E','78E','87E','88E','89E','N/A','N/A']
+    return names[bdch]
+
 def sim_single_pixel(x,board,channel):
     pix= pixel(board,channel)
     return x[land(x['detector']==pix[-1],x['pixel']==int(pix[:-1]))]
 
-def precuts(x,twindow=60):
-    x=x[x['energy']>100]
+def precuts(x,twindow=250,pilewindow=100,energy=100,remove_double=False):
+    '''Returns portion of data with > twindow between separate neighboring events,
+        <pilewindow for detected pileups, and have an energy > energy'''
+    if remove_double==True:
+        x=x[doubles(x)]
+    x=x[x['energy']>energy]
     x.sort(order='timestamp')
     t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
-    trutharray=land(t2-t1>250,t1-t0>250)
+    trutharray=land(t2-t1>twindow,t1-t0>twindow)
     x=x[1:-1][trutharray]
-    x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<twindow)]
-    x=x[x['t0']>100]
-    return x
-
-def precuts_multipixel_twindow(x,twindow):
-    x=x[x['energy']>100]
-    x.sort(order='timestamp')
-    t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
-    trutharray=land(t2-t1>250,t1-t0>250)
-    x=x[1:-1][trutharray]
-    x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<60)]
+    x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<pilewindow)]
     x=x[x['t0']>100]
     return x
 
@@ -74,6 +137,17 @@ def doubles(data,etype='energy'):
             trutharray[i]=False
         i+=1
     return trutharray
+
+def precuts_multipixel_twindow(x,twindow=250,pilewindow=100,energy=100):
+    x=x[x['energy']>100]
+    x.sort(order='timestamp')
+    x=x[doubles(x)]
+    t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
+    trutharray=land(t2-t1>250,t1-t0>250)
+    x=x[1:-1][trutharray]
+    x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<pilewindow)]
+    x=x[x['t0']>100]
+    return x
 
 def good_timestamps(data,time_cut=2*3600/4e-9):
     trutharray=data['timestamp']<time_cut
@@ -136,7 +210,26 @@ def sim_comb_single_pixel(x):
         i=j
     return comb
 
-def sim_thresh(x,thresh):
+def sim_single_event(x):
+    '''Returns a trutharray of len(x), where True entries correspond to entries with
+        only one event. I.e. backscattering is cut.'''
+    trutharray=np.zeros(len(x),dtype=bool)
+    i,j=0,1
+    while i<len(x)-1 and j<len(x)-1:
+        backscattering=x['entry'][i]==x['entry'][j]
+        while backscattering:
+            j+=1
+            backscattering =x['entry'][i]==x['entry'][j]
+        if j-i == 1:
+            trutharray[i:j]=True
+        else:
+            trutharray[i:j]=False
+        i=j
+        j=i+1
+    return trutharray
+
+
+def sim_thresh(x,thresh=15):
     length=len(x)
     trutharray=ones(length,dtype=bool)
     thresh=15.
@@ -224,7 +317,7 @@ def Fierz_fit(histogram,bins,beg,end,normbin,sigma=1):
     sigma=sigma[trutharray]
     m_e_kev=m_e*c**2./(kilo*eV)
     shape=lambda x,b: (1+b*m_e_kev/(m_e_kev+x))/(1+b*m_e_kev/(m_e_kev+normE))
-    pars,vrs=curve_fit(shape,fitbins,fithist,p0=-0.01,epsfcn=0.00001,sigma=sigma)
+    pars,vrs=curve_fit(shape,fitbins,fithist,p0=-0.01,sigma=sigma)
     vrs=np.sqrt(np.diag(vrs))
     return pars[0],vrs[0]
 
@@ -260,12 +353,6 @@ def Fierz_arb_norm_fit(simulation,data,bins,beg=100,end=200,sigma=1):
 #    dat=np.concatenate(dat[:])
 #    return dat
 
-def calibrate(bins,pixel):
-    '''Returns calibrated bins for the given pixel (or bdch).
-        Ex: >>> histbins = predefined.calibrate(histbins,'52W')
-                or
-            >>> histbins = predefined.calibrate(histbins,6)'''
-    if pixel=='52W'or pixel == 6:
-        return bins/6.2844 + 19.1/6.2844
+
 
 

@@ -97,6 +97,10 @@ def trig(fname):
         data=np.core.records.fromfile(f,formats=formatting,shape=numwaves,names=names,byteorder='<')
     return data,timestamp
 
+def par(fname):
+    dtype={'names':('threshold','falltime','top','rise'),'formats':('>i4','>i8','>i2','>i2')}
+    return np.fromfile(fname,dtype=dtype)
+
 '''def file_consolidation(path,runnumber)
     x=filter(lambda x: x.startswith('Run_'+str(runnumber)) and x.endswith('-comb.bin') and x!='Run_'+str(runnumber)+'_0-comb.bin',os.listdir(path))
     name='Run_'+str(runnumber)

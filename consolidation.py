@@ -48,7 +48,7 @@ for i in runs:
             if i<99:
                 beg = i
             xx=x[i-beg:i+99]    #Maybe just assign xx=x[blah]['requesttime']
-            truth1=land(xx['requesttime']<x['timestamp'][i],x['timestamp'][i]<xx['requesttime']+60000/4)
+            truth1=land(xx['requesttime']<x['timestamp'][i],x['timestamp'][i]<xx['requesttime']+60000/4) # I think that this is a 60 us = 60,000/ us/4ns timebins
             truth2 = land(xx['requesttime']<x['timestamp'][i]+3500,x['timestamp'][i]<xx['requesttime']+60000/4)
             t[i] = not np.any(land(truth1,truth2))
         y.append(x[t])
