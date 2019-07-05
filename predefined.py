@@ -51,6 +51,23 @@ def pixel_to_bdch(sim):
     bdch[0]+=v_detector_board(sim['detector'])
     return bdch
 #---------------------------------------------------------------------------------------
+calibration=np.load('/home/noah/Desktop/large_analysis/ca_analysis/simulation_comparison/calibration.npy')
+calibration=calibration.view(np.recarray)
+def calibrate(energy_type,board,channel): 
+    bdch=int(board*8+channel) 
+    if bdch ==6: 
+        m,b=1/calibration.slope[3],calibration.offset[3]
+    elif bdch==11: 
+        m,b=1/calibration.slope[0],calibration.offset[0]
+    elif bdch==12: 
+        m,b=1/calibration.slope[1],calibration.offset[1]
+    elif bdch==35: 
+        m,b=1/calibration.slope[2],calibration.offset[2]
+    else: 
+        m,b=0,0   
+    return (energy_type-b)*m
+vec_calibrate=np.vectorize(calibrate)
+
 def land(x,y):
     return np.logical_and(x,y)
 
@@ -89,9 +106,11 @@ def sim_single_pixel(x,board,channel):
     pix= pixel(board,channel)
     return x[land(x['detector']==pix[-1],x['pixel']==int(pix[:-1]))]
 
-def precuts(x,twindow=250,pilewindow=100,energy=100):
+def precuts(x,twindow=250,pilewindow=100,energy=100,remove_double=False):
     '''Returns portion of data with > twindow between separate neighboring events,
         <pilewindow for detected pileups, and have an energy > energy'''
+    if remove_double==True:
+        x=x[doubles(x)]
     x=x[x['energy']>energy]
     x.sort(order='timestamp')
     t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
@@ -119,14 +138,14 @@ def doubles(data,etype='energy'):
         i+=1
     return trutharray
 
-def precuts_multipixel_twindow(x,twindow):
+def precuts_multipixel_twindow(x,twindow=250,pilewindow=100,energy=100):
     x=x[x['energy']>100]
     x.sort(order='timestamp')
     x=x[doubles(x)]
     t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
     trutharray=land(t2-t1>250,t1-t0>250)
     x=x[1:-1][trutharray]
-    x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<60)]
+    x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<pilewindow)]
     x=x[x['t0']>100]
     return x
 
@@ -298,7 +317,7 @@ def Fierz_fit(histogram,bins,beg,end,normbin,sigma=1):
     sigma=sigma[trutharray]
     m_e_kev=m_e*c**2./(kilo*eV)
     shape=lambda x,b: (1+b*m_e_kev/(m_e_kev+x))/(1+b*m_e_kev/(m_e_kev+normE))
-    pars,vrs=curve_fit(shape,fitbins,fithist,p0=-0.01,epsfcn=0.00001,sigma=sigma)
+    pars,vrs=curve_fit(shape,fitbins,fithist,p0=-0.01,sigma=sigma)
     vrs=np.sqrt(np.diag(vrs))
     return pars[0],vrs[0]
 
@@ -334,12 +353,6 @@ def Fierz_arb_norm_fit(simulation,data,bins,beg=100,end=200,sigma=1):
 #    dat=np.concatenate(dat[:])
 #    return dat
 
-def calibrate(bins,pixel):
-    '''Returns calibrated bins for the given pixel (or bdch).
-        Ex: >>> histbins = predefined.calibrate(histbins,'52W')
-                or
-            >>> histbins = predefined.calibrate(histbins,6)'''
-    if pixel=='52W'or pixel == 6:
-        return bins/6.2844 + 19.1/6.2844
+
 
 
