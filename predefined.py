@@ -65,6 +65,8 @@ def calibrate(energy_type,board,channel):
         m,b=1/calibration.slope[1],calibration.offset[1]
     elif bdch==35: 
         m,b=1/calibration.slope[2],calibration.offset[2]
+    elif bdch==34:
+        m,b=1/calibration.slope[4],calibration.offset[4]
     else: 
         m,b=0,0   
     return (energy_type-b)*m
