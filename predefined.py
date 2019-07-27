@@ -132,13 +132,18 @@ def doubles(data,etype='energy'):
     bdch=0
     while i < length:
         bdch=data['board'][i]*8+data['channel'][i]
-        multi=len(data[i:i+100][land(data[i:i+100]['board']*8+data[i:i+100]['channel'] == bdch,\
-                                        land(np.abs(data[i:i+100][etype]-data[i][etype])<Ediff,\
-                np.abs(data[i:i+100]['timestamp']-data[i:i+100]['timestamp']<timewindow)))])
+        multi=len(data[i:i+100][(data[i:i+100]['board']*8+data[i:i+100]['channel'] == bdch) \
+                                *(np.abs(data[i:i+100][etype]-data[i][etype])<Ediff) \
+                                *(np.abs(data[i:i+100]['timestamp']-data[i:i+100]['timestamp'])<timewindow)])
         if multi>1 :
             trutharray[i]=False
         i+=1
     return trutharray
+
+
+#(data[i:i+100]['board']*8+data[i:i+100]['channel'] == bdch)*(np.abs(data[i:i+100][etype]-data[i][etype])<Ediff)*(np.abs(data[i:i+100]['timestamp']-data[i:i+100]['timestamp'])<timewindow)
+
+
 
 def precuts_multipixel_twindow(x,twindow=250,pilewindow=100,energy=100):
     x=x[x['energy']>100]
