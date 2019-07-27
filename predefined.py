@@ -54,6 +54,8 @@ def pixel_to_bdch(sim):
 calibration=np.load('/home/noah/Desktop/large_analysis/ca_analysis/simulation_comparison/calibration.npy')
 calibration=calibration.view(np.recarray)
 def calibrate(energy_type,board,channel): 
+    '''Use vec_calibrate(energy,board,channel) to return an array of calibrated energies which
+           depend on board + ch'''
     bdch=int(board*8+channel) 
     if bdch ==6: 
         m,b=1/calibration.slope[3],calibration.offset[3]
@@ -77,9 +79,9 @@ def lor(x,y):
 def cbins(x):
     return 0.5*(x[:-1]+x[1:])
 
-def gauss(x,*pars):
-    a,mu,sigma=pars
-    return a*np.exp(-(x-mu)**2./(2.*sigma**2.))
+def gauss(t,mu=0,sigma=1):
+    '''Returns a normalize gaussian distribution centered at mu and with sigma width'''
+    return (2*3.14159*sigma**2.)**(-0.5)*np.exp(-(t-t[mu])**2./(2.*sigma**2.))
 
 def offdblgauss(x,*pars):
     a,mu,sigma,b,mu1,sigma1,offset=pars
@@ -120,7 +122,7 @@ def precuts(x,twindow=250,pilewindow=100,energy=100,remove_double=False):
     x=x[x['t0']>100]
     return x
 
-def doubles(data,etype='energy'):
+def doubles(data,etype='energy'): 
     timewindow=3500
     Ediff=1
     length=len(data)
@@ -289,10 +291,14 @@ def east_west(detector):
         return 3
 
 
+vectorboard=np.vectorize(board,otypes=[int])
+vectorchannel=np.vectorize(channel,otypes=[int])
+vectordetector=np.vectorize(east_west,otypes=[int])
+
 def sim_restructure(simdata):
-    vectorboard=np.vectorize(board,otypes=[int])
-    vectorchannel=np.vectorize(channel,otypes=[int])
-    vectordetector=np.vectorize(east_west,otypes=[int])
+#    vectorboard=np.vectorize(board,otypes=[int])
+#    vectorchannel=np.vectorize(channel,otypes=[int])
+#    vectordetector=np.vectorize(east_west,otypes=[int])
     dtype=[('entry', '<i4'), ('board', '<i4'), ('channel', '<i4'), ('timestamp', '<f4'), ('energy', '<f4')]
     output=np.zeros(len(simdata),dtype=dtype)
     output['board']=vectorboard(simdata['pixel'])+vectordetector(simdata['detector'])
