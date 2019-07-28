@@ -53,7 +53,11 @@ def pixel_to_bdch(sim):
     bdch[0]+=v_detector_board(sim['detector'])
     return bdch
 #---------------------------------------------------------------------------------------
-calibration=np.load(cwd+'/simulation_comparison/calibration.npy')
+try:
+    calibration=np.load('/home/noah/Desktop/large_analysis/ca_analysis/simulation_comparison/calibration.npy')
+except FileNotFoundError:
+    calibration=np.load('/nics/d/home/nwbirge/large_analysis/ca_analysis/simulation_comparison/calibration.npy')
+
 calibration=calibration.view(np.recarray)
 def calibrate(energy_type,board,channel): 
     '''Use vec_calibrate(energy,board,channel) to return an array of calibrated energies which
