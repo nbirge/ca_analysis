@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.constants import *
 from scipy.optimize import curve_fit
+import os
+cwd=os.getcwd()
 #import load
 
 pix_map={ 
@@ -51,7 +53,7 @@ def pixel_to_bdch(sim):
     bdch[0]+=v_detector_board(sim['detector'])
     return bdch
 #---------------------------------------------------------------------------------------
-calibration=np.load('./simulation_comparison/calibration.npy')
+calibration=np.load(cwd+'/simulation_comparison/calibration.npy')
 calibration=calibration.view(np.recarray)
 def calibrate(energy_type,board,channel): 
     '''Use vec_calibrate(energy,board,channel) to return an array of calibrated energies which
