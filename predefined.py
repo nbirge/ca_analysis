@@ -51,7 +51,7 @@ def pixel_to_bdch(sim):
     bdch[0]+=v_detector_board(sim['detector'])
     return bdch
 #---------------------------------------------------------------------------------------
-calibration=np.load('/home/noah/Desktop/large_analysis/ca_analysis/simulation_comparison/calibration.npy')
+calibration=np.load('./simulation_comparison/calibration.npy')
 calibration=calibration.view(np.recarray)
 def calibrate(energy_type,board,channel): 
     '''Use vec_calibrate(energy,board,channel) to return an array of calibrated energies which
@@ -125,6 +125,7 @@ def precuts(x,twindow=250,pilewindow=100,energy=100,remove_double=False):
     return x
 
 def doubles(data,etype='energy'): 
+    '''Returns a logical array with False -> 2nd+ recorded event'''
     timewindow=3500
     Ediff=1
     length=len(data)
