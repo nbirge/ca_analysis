@@ -1,8 +1,13 @@
 import numpy as np
 from scipy.constants import *
 from scipy.optimize import curve_fit
-import os
+import os; import platform
+op_sys=platform.dist()[0]
 cwd=os.getcwd()
+
+calib_loc='/home/noah/Desktop/large_analysis/ca_analysis/simulation_comparison/calibration.npy'
+if op_sys=='centos':
+    calib_loc='/nics/d/home/nwbirge/large_analysis/ca_analysis/simulation_comparison/calibration.npy'
 #import load
 
 pix_map={ 
@@ -53,10 +58,8 @@ def pixel_to_bdch(sim):
     bdch[0]+=v_detector_board(sim['detector'])
     return bdch
 #---------------------------------------------------------------------------------------
-try:
-    calibration=np.load('/home/noah/Desktop/large_analysis/ca_analysis/simulation_comparison/calibration.npy')
-except FileNotFoundError:
-    calibration=np.load('/nics/d/home/nwbirge/large_analysis/ca_analysis/simulation_comparison/calibration.npy')
+
+calibration=np.load(calib_loc)
 
 calibration=calibration.view(np.recarray)
 def calibrate(energy_type,board,channel): 
@@ -127,7 +130,7 @@ def precuts(x,twindow=250,pilewindow=100,energy=100,remove_double=False):
     trutharray=land(t2-t1>twindow,t1-t0>twindow)
     x=x[1:-1][trutharray]
     x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<pilewindow)]
-    x=x[x['t0']>100]
+    x=x[x['t0']>400]
     return x
 
 def doubles(data,etype='energy'): 
