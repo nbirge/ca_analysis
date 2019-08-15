@@ -14,7 +14,7 @@ def trapnfit(path):
 #    return data,energy
     return data
 
-def raw(path,length,numwaves,row):
+def raw(path,length=3500,numwaves=10000,row=1000):
     '''This will read numwaves number of waveforms of length length into a structured numpy array *** Starts with row 0!'''
     fsize=os.stat(path).st_size
     totrows = (fsize-8)/(33+length*2)

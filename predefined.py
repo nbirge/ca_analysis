@@ -59,23 +59,16 @@ def pixel_to_bdch(sim):
     return bdch
 #---------------------------------------------------------------------------------------
 
-calibration=np.load(calib_loc)
+calibration=np.load(calib_loc).view(np.recarray)
 
 calibration=calibration.view(np.recarray)
 def calibrate(energy_type,board,channel): 
     '''Use vec_calibrate(energy,board,channel) to return an array of calibrated energies which
            depend on board + ch'''
-    bdch=int(board*8+channel) 
-    if bdch ==6: 
-        m,b=1/calibration.slope[3],calibration.offset[3]
-    elif bdch==11: 
-        m,b=1/calibration.slope[0],calibration.offset[0]
-    elif bdch==12: 
-        m,b=1/calibration.slope[1],calibration.offset[1]
-    elif bdch==35: 
-        m,b=1/calibration.slope[2],calibration.offset[2]
-    elif bdch==34:
-        m,b=1/calibration.slope[4],calibration.offset[4]
+    bdch=int(board*8+channel)
+    row=np.nonzero((calibration.board==board)*(calibration.channel==channel))[0]
+    if len(row)==1:
+        m,b=1./calibration[row[0]].slope,calibration[row[0]].offset
     else: 
         m,b=0,0   
     return (energy_type-b)*m
@@ -92,7 +85,7 @@ def cbins(x):
 
 def gauss(t,mu=0,sigma=1):
     '''Returns a normalize gaussian distribution centered at mu and with sigma width'''
-    return (2*3.14159*sigma**2.)**(-0.5)*np.exp(-(t-t[mu])**2./(2.*sigma**2.))
+    return (2*pi*sigma**2.)**(-0.5)*np.exp(-(t-t[mu]).astype(float)**2./(2.*sigma**2.))
 
 def offdblgauss(x,*pars):
     a,mu,sigma,b,mu1,sigma1,offset=pars
@@ -219,9 +212,9 @@ def sim_comb_single_pixel(x):
     while i < len(x)-1 and j<len(x)-1:
         j=i+1
         backscattering=x[i]['entry']==x[j]['entry']
-        energy= x['energy'][i]
+        energy= x[i]['energy']
         while backscattering and j<len(x)-1:
-            energy+=x['energy'][j]
+            energy+=x[j]['energy']
             j+=1
             backscattering=x[i]['entry']==x[j]['entry']
         comb[i]=x[i]
@@ -229,16 +222,42 @@ def sim_comb_single_pixel(x):
         i=j
     return comb
 
+def sim_sing_pix_coinc(x,coinc_window=400e-9):
+    '''Returns a copy of x where events which fall on the same pixel
+        within a coincidence window of coinc_window are summed
+        NOTE: events should be in bd,ch structure, not det,pix '''
+    i,j=0,0
+    rows=len(x)-1
+    count=0
+    while i <rows:
+        count+=1
+        j=i+1
+        if j>rows:
+            break
+        backscattering=x[j]['entry']==x[i]['entry']
+        while backscattering:
+            if (x[j]['board']==x[i]['board'])*(x[j]['channel']==x[i]['channel'])*(x[j]['timestamp']-x[i]['timestamp']<400e-9):
+                x[i]['energy']+=x[j]['energy']
+                x[j]['energy']=0
+            j+=1
+            if j>rows:
+                break
+            backscattering=x[j]['entry']==x[i]['entry']
+        i+=1
+    return x[x['energy']>0]
+                
+    
+
 def sim_single_event(x):
     '''Returns a trutharray of len(x), where True entries correspond to entries with
         only one event. I.e. backscattering is cut.'''
     trutharray=np.zeros(len(x),dtype=bool)
     i,j=0,1
     while i<len(x)-1 and j<len(x)-1:
-        backscattering=x['entry'][i]==x['entry'][j]
+        backscattering=x[i]['entry']==x[j]['entry']
         while backscattering:
             j+=1
-            backscattering =x['entry'][i]==x['entry'][j]
+            backscattering =x[i]['entry']==x[j]['entry']
         if j-i == 1:
             trutharray[i:j]=True
         else:
@@ -246,7 +265,6 @@ def sim_single_event(x):
         i=j
         j=i+1
     return trutharray
-
 
 def sim_thresh(x,thresh=15):
     length=len(x)
@@ -329,7 +347,9 @@ def Fierz_fit(histogram,bins,beg,end,normbin,sigma=1):
     ''' histogram is generally a ratio of data to simulation w/b=0 (should be a normalized ratio),
         bins are the energybins for histogram, beg and end are the beginning 
         and ending to the fit range, and normbin is the bin of energybins to 
-        which you're normalizing'''
+        which you're normalizing
+        ------------------------------------------------------------------------
+         OLD AND DEPRECATED HAVE SINCE MOVED TO pd.fierz_fit(X,N,b) (line 368)'''
     trutharray=land(bins>beg,bins<end)
     fitbins=bins[trutharray].astype(float)
     normE=bins[normbin]
@@ -345,7 +365,9 @@ def Fierz_fit(histogram,bins,beg,end,normbin,sigma=1):
     return pars[0],vrs[0]
 
 def Fierz_arb_norm(X,a,b):
-    '''X=tuple of simulation, bins & trutharray'''
+    '''X=tuple of simulation, bins & trutharray
+        ------------------------------------------------------------------------
+         OLD AND DEPRECATED HAVE SINCE MOVED TO pd.fierz_fit(X,N,b) (line 368)'''
     histo,bins,trutharray = X
     trutharray=trutharray.astype(bool)
     redHisto=histo[trutharray].astype(float)
@@ -354,7 +376,9 @@ def Fierz_arb_norm(X,a,b):
 
 def Fierz_arb_norm_fit(simulation,data,bins,beg=100,end=200,sigma=1):
     '''Fits simulation to data. I.e. Data= Fierz_arb_norm((simulation,bins,truth),a,b) | 
-        To plot the fit, Simulation is scaled by fit pars to data '''
+        To plot the fit, Simulation is scaled by fit pars to data 
+        ------------------------------------------------------------------------
+         OLD AND DEPRECATED HAVE SINCE MOVED TO pd.fierz_fit(X,N,b) (line 368)'''
     trutharray=land(bins>beg,bins<end)
     guess=[simulation[trutharray][0]/data[trutharray][0],0]
     bounds=[(0,-10),(np.inf,10)]
@@ -364,6 +388,15 @@ def Fierz_arb_norm_fit(simulation,data,bins,beg=100,end=200,sigma=1):
     pars,vrs=curve_fit(Fierz_arb_norm,X,data[trutharray],sigma=sigma[trutharray],p0=guess)#,bounds=bounds)
     vrs=np.sqrt(np.diag(vrs))
     return pars,vrs
+
+def fierz_fit(X,N,b):
+    '''X is trutharray, w(b=0), and w(b=1)
+    NOTES: this assumes the data has been binned according to some set of bins B
+           trutharray = bins where this is to fit
+           w must be binned just as data to which this is fitting '''
+    trutharray=X[0].astype(bool)
+    w0,w1=X[1:3]
+    return N*(w0[trutharray] + b*(w1[trutharray]-w0[trutharray]))
 
 
 #def combsets(runs):
