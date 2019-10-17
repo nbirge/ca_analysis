@@ -112,24 +112,38 @@ def sim_single_pixel(x,board,channel):
     pix= pixel(board,channel)
     return x[land(x['detector']==pix[-1],x['pixel']==int(pix[:-1]))]
 
-def precuts(x,twindow=250,pilewindow=100,energy=100,remove_double=False):
-    '''Returns portion of data with > twindow between separate neighboring events,
+def precuts(x,pilewindow=100,energy=100,remove_double=False,\
+            event_window=250,keep_pulser=False,oscillation=False,osc_amp=50):
+    '''Returns portion of data with > event_window between separate neighboring events,
         <pilewindow for detected pileups, and have an energy > energy'''
+    types=x.dtype
+    types=types.fields.keys()
+    
     if remove_double==True:
         x=x[doubles(x)]
+        
+    
     x=x[x['energy']>energy]
     x.sort(order='timestamp')
+    
+    if oscillation == True and 'osc_amps' in types:
+        t = np.sqrt(np.sum(x['osc_amps'][:,0:2]**2.,axis=1)) < osc_amp
+        x=x[t]
+        
     t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
-    trutharray=land(t2-t1>twindow,t1-t0>twindow)
+    trutharray=(t2-t1>event_window)*(t1-t0>event_window)
+    if keep_pulser==True:
+        trutharray+=x['energy'][1:-1]>2500
     x=x[1:-1][trutharray]
-    x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<pilewindow)]
-    x=x[x['t0']>400]
+    x=x[x['pileup']<2+(np.abs(x['pilediff'])<pilewindow)]
+    x=x[np.abs(x['pilediff']+10000)>100]
+
     return x
 
 def doubles(data,etype='energy'): 
     '''Returns a logical array with False -> 2nd+ recorded event'''
     timewindow=3500
-    Ediff=1
+    Ediff=5
     length=len(data)
     trutharray=np.ones(length,dtype=bool)
     multi=0
@@ -139,7 +153,7 @@ def doubles(data,etype='energy'):
         bdch=data['board'][i]*8+data['channel'][i]
         multi=len(data[i:i+100][(data[i:i+100]['board']*8+data[i:i+100]['channel'] == bdch) \
                                 *(np.abs(data[i:i+100][etype]-data[i][etype])<Ediff) \
-                                *(np.abs(data[i:i+100]['timestamp']-data[i:i+100]['timestamp'])<timewindow)])
+                                *(np.abs(data[i:i+100]['timestamp']-data[i]['timestamp'])<timewindow)])
         if multi>1 :
             trutharray[i]=False
         i+=1
@@ -155,10 +169,10 @@ def precuts_multipixel_twindow(x,twindow=250,pilewindow=100,energy=100):
     x.sort(order='timestamp')
     x=x[doubles(x)]
     t0,t1,t2=x['timestamp'][0:-2],x['timestamp'][1:-1],x['timestamp'][2:]
-    trutharray=land(t2-t1>250,t1-t0>250)
+    trutharray=(t2-t1>250)*(t1-t0>250)
     x=x[1:-1][trutharray]
-    x=x[lor(x['pileup']<2,np.abs(x['pilediff'])<pilewindow)]
-    x=x[x['t0']>100]
+    x=x[x['pileup']<2+(np.abs(x['pilediff'])<pilewindow)]
+    x=x[np.abs(x['pilediff']+10000)>100]
     return x
 
 def good_timestamps(data,time_cut=2*3600/4e-9):
@@ -331,6 +345,8 @@ vectorchannel=np.vectorize(channel,otypes=[int])
 vectordetector=np.vectorize(east_west,otypes=[int])
 
 def sim_restructure(simdata):
+    '''Returns data w/ same structure (bd,ch...) as real data.
+        NOTE: timestamps are still in seconds (not 4 ns timebins)'''
 #    vectorboard=np.vectorize(board,otypes=[int])
 #    vectorchannel=np.vectorize(channel,otypes=[int])
 #    vectordetector=np.vectorize(east_west,otypes=[int])
@@ -397,6 +413,7 @@ def fierz_fit(X,N,b):
     trutharray=X[0].astype(bool)
     w0,w1=X[1:3]
     return N*(w0[trutharray] + b*(w1[trutharray]-w0[trutharray]))
+#     return N*w0[trutharray]*(1+ b*(w1[trutharray]/w0[trutharray]-1))
 
 
 #def combsets(runs):
