@@ -40,7 +40,7 @@ for i in range(len(sys.argv[:])):
     if sys.argv[i] == '-simulation':
         simulation=1
 
-length = -1.
+length = int(3500)
 if rank == 0:
     with open(inpath+fname,'rb') as f:
         theader = np.core.records.fromfile(f,formats='Q',shape=1,byteorder='<')[0][0]
@@ -66,7 +66,7 @@ elif rank == size-1:
 
 datachunk=int(datachunk)
 
-piece = int(10000) # 120,000 waveforms in memory < 1GB, there will be datachunk/piece iterations per core
+piece = int(100000) # 120,000 waveforms in memory < 1GB, there will be datachunk/piece iterations per core
 begin=time.time()
 
 
@@ -122,7 +122,7 @@ np.zeros(piece+datachunk%piece)
 
     with open(outpath+fname[:-4]+'-'+str(rank)+'.part','w') as f:
         for i in range(int(datachunk/piece)):
-            if i == int(datachunk/piece-1):
+            if i == int(datachunk/piece)-1:
                 rem = datachunk%piece
             else:
                 rem = 0

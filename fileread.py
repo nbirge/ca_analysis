@@ -14,7 +14,7 @@ def trapnfit(path):
 #    return data,energy
     return data
 
-def raw(path,length,numwaves,row):
+def raw(path,length=3500,numwaves=10000,row=1000):
     '''This will read numwaves number of waveforms of length length into a structured numpy array *** Starts with row 0!'''
     fsize=os.stat(path).st_size
     totrows = (fsize-8)/(33+length*2)
@@ -76,13 +76,13 @@ def gen_output(fname):
 
 def simulation(fname):
     dtype={'names':('entry','detector','pixel','timestamp','energy'),'formats':('i4','U1','i4','f8','f8')}
-    data= np.genfromtxt(fname,dtype=dtype,delimiter=' ')
+    data= np.loadtxt(fname,dtype=dtype,delimiter=' ')
     data['energy']=data['energy']/1.e3
     return data
 
 def initial_simulation(fname):
     dtype={'names':('entry','particle','t0','energy','x','y','z','vx','vy','vz'),'formats':('i4','i4','f8','f8','f8','f8','f8','f8','f8','f8')}
-    data= np.genfromtxt(fname,dtype=dtype,delimiter=' ')
+    data= np.loadtxt(fname,dtype=dtype,delimiter=' ')
     data['energy']=data['energy']/1.e3
     return data
 

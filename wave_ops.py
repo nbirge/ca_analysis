@@ -2,7 +2,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy import signal
 from scipy.special import factorial
-import pFilter
+#import pFilter
 
 #Average fall times for run 131 (RUN 120 FOR 64E/W AND 65W) pixel by pixel. SEE ca_analysis/falltimes/falltime_distros.ipynb
 means=np.array([1000, 1031.3367, 1086.8575, 1217.0291, 1041.5563, 1000, 1230.2096, 1188.8999,\
@@ -50,7 +50,7 @@ def decay(x,*pars):
     return amp*approxexp(-1.*(x)*lamda,10)
 
 
-def baseline_restore(wave,pretrigger):
+def baseline_restore(wave,pretrigger=600):
     '''Bitwise & operation and range restore (-=16384) with a baseline restoration \n Use: >> baseline_restore(wavetorestorebaseline,pretrig) '''
     numwaves = len(wave['wave'])
     wave['wave']=wave['wave']&16383
