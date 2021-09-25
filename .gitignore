@@ -4,6 +4,7 @@
 *.part
 *.bin
 *.dat
+*.pdf
 
 #except specific example plots saved as Example* in the appropriate sub dir
 !/plots/wave_display/Example_2017_Data.png
