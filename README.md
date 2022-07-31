@@ -11,14 +11,15 @@ Full data is located on the ACF
 /lustre/haven/gamma/neutrons/ca45_data
 Python version is 3.6.7\*
 
-Scripts:
+<b>Scripts:</b>
+
 wave_display.py:
 Arguments:
 run,part,path,numwaves,startrow 
 path = path to .bin files, where files are named like Run_60_1.bin
 run = for this example 60 is run number
 part = for this example 1 is part number
-numwaves = integer from 1 to ??
+numwaves = integer number of waves to show
 startrow = integer from 1 to ??
 
 Output:
@@ -33,11 +34,9 @@ run,part,inpath,outpath
 inpath = path to .bin files, where files are named like Run_60_1.bin
 run = for this example 60 is run number
 part = for this example 1 is part number
-outpath = ./ most times ??
+outpath = ./ 
 -f enable fitting
--t0 enable T_0 determination ??
--t
--Tn??
+-t0 enable T_0 determination for waveforms
 
 Output:
 Several .part files which are consolidated upon successful completion to a .bin file for that run. The number of part files is determined by
