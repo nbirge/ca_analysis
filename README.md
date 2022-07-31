@@ -1,6 +1,8 @@
 # ca_analysis
 Ca analysis toolkit (2017 data)<br>
 
+This contains the digital signal processing (DSP) toolkit I used for processing the raw Calcium-45 waveforms (typically .py files) as well as many jupyter notebooks used to analyze the processed waveform data
+
 
 load.py is deprecated and its utility is encompassed in fileread.py <br>
 
